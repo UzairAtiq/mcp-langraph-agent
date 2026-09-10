@@ -1,27 +1,47 @@
+from contextlib import AsyncExitStack
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 import sys
 
-#setting the parameters to launch the server 
-server_params = StdioServerParameters(
-    command=sys.executable,
-    args=["-m" , "mcp_servers.db_server"],
-)
 
+class MCPClient:
 
-async def get_mcp_tools():
-    
-    #launching the server process as a subprocess
-    async with stdio_client(server_params) as (read, write):
+    #initializing the MCP client
+    def __init__(self, server_module: str):
+        self.server_module = server_module
+        self.session: ClientSession | None = None
+        self._stack = AsyncExitStack()
 
-        #initializing the session 
-        async with ClientSession(read, write) as session:
-            await session.initialize()
+    async def connect(self):
 
-            #getting tools from the server
-            result = await session.list_tools()
+        #setting the parameters to launch the MCP server
+        params = StdioServerParameters(
+            command=sys.executable,
+            args=["-m", self.server_module],
+        )
 
-            return result.tools
+        #launching the server and creating the communication channel
+        read, write = await self._stack.enter_async_context(
+            stdio_client(params)
+        )
 
+        #creating the MCP session
+        self.session = await self._stack.enter_async_context(
+            ClientSession(read, write)
+        )
 
-  
+        #initializing the MCP session
+        await self.session.initialize()
+
+    async def call_tool(self, name: str, args: dict):
+
+        #calling the MCP tool
+        result = await self.session.call_tool(name, args)
+
+        #returning only the text content from the tool result
+        return result.content[0].text
+
+    async def close(self):
+
+        #closing the MCP connection and cleaning up resources
+        await self._stack.aclose()
