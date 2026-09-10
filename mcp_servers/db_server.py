@@ -1,6 +1,6 @@
 import os
 import psycopg
-from config import DATABASE_URL
+from config.settings import DATABASE_URL
 from mcp.server.mcpserver import MCPServer
 
 #Creating the mcp server 
