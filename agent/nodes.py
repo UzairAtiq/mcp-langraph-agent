@@ -35,7 +35,7 @@ def should_continue(state: MessagesState ) -> str :
   messages  = state["messages"]
   last_message = messages[-1]
 
-  #if tool call id made then perform an action 
+  #if tool call is made then perform an action 
   if last_message.tool_calls :
     return "tool_node"
 
