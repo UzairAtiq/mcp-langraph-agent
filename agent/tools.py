@@ -1,6 +1,7 @@
 from contextlib import AsyncExitStack
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from langchain_mcp_adapters.client import MultiServerMCPClient
 import sys
 
 
@@ -45,3 +46,28 @@ class MCPClient:
 
         #closing the MCP connection and cleaning up resources
         await self._stack.aclose()
+
+async def get_langgraph_tools():
+
+    #Settinng up the client
+    client = MultiServerMCPClient(
+        {
+            #Mapping server names to configs
+            "database": {
+                "command": "python",
+                "args": ["-m", "mcp_servers.db_server"],
+                "transport": "stdio",
+            },
+
+            "slack": {
+                "command": "python",
+                "args": ["-m", "mcp_servers.slack_server"],
+                "transport": "stdio",
+            },
+        }
+    )
+    #getting a list of all tools from the connected servers
+    tools = await client.get_tools()
+
+    #returning the tools list
+    return tools
