@@ -1,10 +1,10 @@
 import os
 import psycopg
 from config.settings import DATABASE_URL
-from mcp.server.mcpserver import MCPServer
+from mcp.server.fastmcp import FastMCP
 
 #Creating the mcp server 
-mcp = MCPServer("database-server")
+mcp = FastMCP("database-server")
 
 #defining the mcp tool for getting customer
 @mcp.tool()

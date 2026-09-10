@@ -1,11 +1,11 @@
 import os
 import requests
 from dotenv import load_dotenv
-from mcp.server.mcpserver import MCPServer
+from mcp.server.fastmcp import FastMCP
 from config.settings import SLACK_WEBHOOK_URL 
 
 #creating the mcp server
-mcp = MCPServer("slack-server")
+mcp = FastMCP("slack-server")
 
 #defining the mcp tool for sending a slack message
 @mcp.tool()
