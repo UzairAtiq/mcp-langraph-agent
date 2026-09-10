@@ -8,6 +8,7 @@ mcp = MCPServer("database-server")
 
 #defining the mcp tool for getting customer
 @mcp.tool()
+
 def lookup_customer(customer_id: int) -> dict:
     """Look up a customer by their ID."""
     with psycopg.connect(DATABASE_URL) as conn:
@@ -39,5 +40,5 @@ def lookup_customer(customer_id: int) -> dict:
         "status": row[4],
     }
 
-
-print(lookup_customer(3))
+if __name__ == "__main__":
+    mcp.run()
