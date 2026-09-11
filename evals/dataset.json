@@ -10,8 +10,10 @@
       "lookup_customer",
       "send_slack_message"
     ],
-    "final_answer": "The customer\u2019s status has been posted to Slack:\n\n**Customer 3 (Sara Malik) \u2013 Status: inactive**",
-    "tools_match": true
+    "final_answer": "The customer\u2019s status has been posted to Slack.",
+    "tools_match": true,
+    "judge_score": "pass",
+    "judge_reasoning": "Used required tools and confirmed posting."
   },
   {
     "id": "test_2_lookup_only",
@@ -22,8 +24,10 @@
     "actual_tools": [
       "lookup_customer"
     ],
-    "final_answer": "The email address for customer\u202f5 (Ayesha\u202fNoor) is **ayesha@example.com**.",
-    "tools_match": true
+    "final_answer": "Ayesha Noor\u2019s email address is **ayesha@example.com**.",
+    "tools_match": true,
+    "judge_score": "pass",
+    "judge_reasoning": "The agent used the required tool and provided a specific email address for customer 5."
   },
   {
     "id": "test_3_slack_only",
@@ -34,7 +38,9 @@
     "actual_tools": [
       "send_slack_message"
     ],
-    "final_answer": "The message has been sent to Slack: **\u201cDeployment completed successfully.\u201d**",
-    "tools_match": true
+    "final_answer": "The Slack message has been sent successfully.",
+    "tools_match": true,
+    "judge_score": "pass",
+    "judge_reasoning": "Used the correct tool and confirmed the message was sent."
   }
 ]
