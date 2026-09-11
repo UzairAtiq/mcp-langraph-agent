@@ -14,11 +14,10 @@ llm = ChatGroq(
     )
 
 
-def get_tools() :
+async def get_tools() :
 
   #getting the tools from multiserverClient
-  tools = asyncio.run(get_langgraph_tools())
-  return tools
+   return await get_langgraph_tools()
 
 def bind_llm_with_tools (tools) :
   #binding the tools with the llm
@@ -31,7 +30,7 @@ def make_agent_node(llm_with_tools):
     def agent_node(state: MessagesState):
         
         response = llm_with_tools.invoke(state["messages"])
-        
+
         return {"messages": [response]}
     return agent_node
 
