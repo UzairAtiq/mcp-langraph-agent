@@ -1,0 +1,40 @@
+[
+  {
+    "id": "test_1_full_flow",
+    "prompt": "Look up customer 3 and post their status to Slack",
+    "expected_tools": [
+      "lookup_customer",
+      "send_slack_message"
+    ],
+    "actual_tools": [
+      "lookup_customer",
+      "send_slack_message"
+    ],
+    "final_answer": "The customer\u2019s status has been posted to Slack:\n\n**Customer 3 (Sara Malik) \u2013 Status: inactive**",
+    "tools_match": true
+  },
+  {
+    "id": "test_2_lookup_only",
+    "prompt": "What is customer 5's email address?",
+    "expected_tools": [
+      "lookup_customer"
+    ],
+    "actual_tools": [
+      "lookup_customer"
+    ],
+    "final_answer": "The email address for customer\u202f5 (Ayesha\u202fNoor) is **ayesha@example.com**.",
+    "tools_match": true
+  },
+  {
+    "id": "test_3_slack_only",
+    "prompt": "Send a message to Slack saying 'Deployment completed successfully'",
+    "expected_tools": [
+      "send_slack_message"
+    ],
+    "actual_tools": [
+      "send_slack_message"
+    ],
+    "final_answer": "The message has been sent to Slack: **\u201cDeployment completed successfully.\u201d**",
+    "tools_match": true
+  }
+]
