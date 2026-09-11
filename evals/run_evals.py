@@ -1,8 +1,9 @@
 import asyncio
+import json
 from agent.graph import build_agent
 from observability.tracing import langfuse_handler
 from evals.dataset import TEST_CASES
-import json
+from evals.judge import judge_response
 
 
 async def run_single_test(agent, test_case):
@@ -39,17 +40,24 @@ async def run_all_tests():
     for test_case in TEST_CASES:
         print(f"running: {test_case['id']}")
         result = await run_single_test(agent, test_case)
+
+        # ask the judge to score this result
+        verdict = await judge_response(result)
+        result["judge_score"] = verdict["score"]
+        result["judge_reasoning"] = verdict["reasoning"]
+
         results.append(result)
 
         # simple pass or fail print
         status = "pass" if result["tools_match"] else "fail"
         print(f"{status} - expected {result['expected_tools']}, got {result['actual_tools']}")
+        print(f"judge: {result['judge_score']} - {result['judge_reasoning']}")
 
-        # write results to a json file
+    # write results to a json file
     with open("/Users/uzair/Developer/mcp-langraph-agent/evals/dataset.json", "w") as f:
         json.dump(results, f, indent=2)
 
-    print("results saved to evals/results.json")
+    print("results saved to evals/dataset.json")
 
     return results
 
