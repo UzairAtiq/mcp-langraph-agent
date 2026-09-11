@@ -4,6 +4,10 @@ from mcp.client.stdio import stdio_client
 from langchain_mcp_adapters.client import MultiServerMCPClient
 import sys
 
+# standalone utility for manually testing a single MCP server in isolation.
+# not used by the main agent (which uses get_langgraph_tools + MultiServerMCPClient
+# below to connect to both servers at once). kept here for quick debugging -
+# e.g. testing one server's tools directly without spinning up the full agent.
 
 class MCPClient:
 
