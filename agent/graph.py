@@ -1,13 +1,12 @@
 from agent.state import MessagesState
 from langgraph.graph import StateGraph,START,END
-from agent.nodes import agent_node
 from langgraph.prebuilt import ToolNode
 from agent.nodes import get_tools
 from agent.nodes import should_continue
 from agent.nodes import bind_llm_with_tools
 from agent.nodes import make_agent_node
 from IPython.display import Image, display
-
+import asyncio
 
 #getting the tools 
 tools = get_tools()
@@ -22,7 +21,7 @@ agent_node = make_agent_node(llm_with_tools)
 agent_builder = StateGraph(MessagesState) 
 
 #Adding nodes 
-agent_builder.add_node("agent_node" , agent_node() )
+agent_builder.add_node("agent_node" , agent_node )
 
 agent_builder.add_node("tool_node" , ToolNode(tools) )
 
@@ -39,3 +38,4 @@ agent_builder.add_edge("tool_node", "agent_node")
 agent = agent_builder.compile()
 
 display(Image(agent.get_graph(xray=True).draw_mermaid_png()))
+
