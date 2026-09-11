@@ -13,19 +13,27 @@ llm = ChatGroq(
   api_key=GROQ_API_KEY
     )
 
-#getting the tools from multiserverClient
-tools = asyncio.run(get_langgraph_tools())
 
-#binding the tools with the llm
-llm_with_tools =llm.bind_tools(tools)
+def get_tools() :
+
+  #getting the tools from multiserverClient
+  tools = asyncio.run(get_langgraph_tools())
+  return tools
+
+def bind_llm_with_tools (tools) :
+  #binding the tools with the llm
+  llm_with_tools =llm.bind_tools(tools)
+  return llm_with_tools
+
 
 #defining the agent node 
-def agent_node(state : MessagesState) :
-
-  messages = state["messages"]
-  response = llm_with_tools.invoke(messages)
-
-  return {"messages" : [response]}
+def make_agent_node(llm_with_tools):
+    def agent_node(state: MessagesState):
+        
+        response = llm_with_tools.invoke(state["messages"])
+        
+        return {"messages": [response]}
+    return agent_node
 
 #defining the should_continue function 
 def should_continue(state: MessagesState ) -> str :
