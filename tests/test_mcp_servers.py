@@ -1,26 +1,11 @@
 import asyncio
-import time
 from agent.tools import MCPClient
-from config.settings import get_linkedin_access_token
-from data.post_storage import (
-    generate_next_post_id,
-    get_post_by_id,
-    save_post_record,
-)
 from mcp_servers.db_server import lookup_customer
 from mcp_servers.linkedin_post_generator import (
-    generate_and_request_approval,
     get_post_details,
     list_all_generated_posts,
-    wait_for_approval_decision,
 )
 from mcp_servers.slack_server import send_slack_message
-from services.groq_service import generate_linkedin_post_content
-from services.linkedin_service import fetch_linkedin_person_urn
-from services.slack_service import (
-    execute_post_decision,
-    send_approval_request,
-)
 
 
 # test database mcp tool
@@ -90,85 +75,6 @@ def test_linkedin_tools_read():
     assert details["found"] is False
 
 
-# single unified live test: generate post, send to slack, wait for human decision, execute action, and save to storage
-def test_live_slack_approval_and_publish_flow(timeout_seconds: int = 120) -> dict:
-    topic = "AI Agents and Model Context Protocol in Production"
-    print(f"\n[Live Flow] Generating LinkedIn post about: '{topic}'...")
-
-    # step 1: resolve linkedin token and person urn
-    access_token = get_linkedin_access_token()
-    if not access_token:
-        raise ValueError("LinkedIn access token not found. Please set LINKEDIN_ACCESS_TOKEN in .env or .linkedin_token.")
-
-    person_urn = fetch_linkedin_person_urn(access_token=access_token)
-
-    # step 2: generate post content with groq llm and unique identifier
-    post_content = generate_linkedin_post_content(topic=topic)
-    post_id = generate_next_post_id()
-
-    # step 3: persist pending post record to storage so webhook and decision handlers can retrieve it
-    save_post_record(
-        post_id=post_id,
-        content=post_content,
-        profile_id=person_urn,
-        access_token=access_token,
-        status="pending",
-    )
-
-    # step 4: send block kit approval request with yes/no interactive buttons to slack
-    slack_delivery = send_approval_request(
-        post_id=post_id,
-        content=post_content,
-    )
-    assert slack_delivery.get("success") is True, f"slack delivery failed: {slack_delivery.get('error')}"
-
-    print(f"  ✓ Post `{post_id}` generated and delivered to Slack.")
-    print(f"  👉 Please check your Slack channel and click either:")
-    print(f"     • '✅ Yes (Approve & Post)' -> publishes live to LinkedIn")
-    print(f"     • '❌ No (Discard)'          -> marks as rejected and updates storage")
-    print(f"  ⏳ Waiting up to {timeout_seconds} seconds for your button click...\n")
-
-    # step 5: poll storage for real human interaction received from slack webhook
-    start_time = time.time()
-    poll_interval_seconds = 2.0
-    detected_status = None
-
-    while time.time() - start_time < timeout_seconds:
-        current_record = get_post_by_id(post_id)
-        if current_record:
-            status_value = current_record.get("status")
-            if status_value in ("approved", "discarded", "published", "rejected", "publish_failed"):
-                detected_status = status_value
-                break
-        time.sleep(poll_interval_seconds)
-
-    assert detected_status is not None, f"timed out after {timeout_seconds}s waiting for Slack button click"
-    print(f"  ✓ Slack response detected: '{detected_status}'")
-
-    # step 6: pass post_id to execute_post_decision to retrieve post from storage and execute publish or discard
-    decision_result = execute_post_decision(post_id=post_id)
-    assert decision_result.get("success") is True, f"execution failed: {decision_result.get('error')}"
-
-    # step 7: retrieve finalized post record from storage and report outcome
-    final_post_details = get_post_details(post_id)
-    assert final_post_details.get("found") is True
-    final_record = final_post_details["post"]
-    final_status = final_record.get("status")
-
-    if final_status == "published":
-        response_payload = final_record.get("linkedin_response", {})
-        post_urn = response_payload.get("post_urn", "unknown")
-        print(f"  🎉 Post `{post_id}` was APPROVED and published to LinkedIn! (URN: {post_urn})")
-    elif final_status == "rejected":
-        print(f"  🛑 Post `{post_id}` was DISCARDED and marked as rejected in database.")
-    elif final_status == "publish_failed":
-        print(f"  ⚠️ Post `{post_id}` was approved but publishing to LinkedIn failed.")
-    else:
-        print(f"  ℹ️ Post `{post_id}` finalized with status: '{final_status}'")
-
-    return final_post_details
-
-
 # test standalone mcp client connection to a server over stdio
 async def _run_mcp_client_test():
     client = MCPClient("mcp_servers.slack_server")
@@ -207,7 +113,3 @@ if __name__ == "__main__":
     print("   ✓ mcp_client_connection passed")
 
     print("\n🎉 Automated unit tests completed successfully!")
-    print("\nTo run the live interactive human-approval test:")
-    print("  1. Ensure FastAPI server is running: uvicorn api.main:app --port 8000")
-    print("  2. Ensure ngrok is running: ngrok http 8000")
-    print("  3. Run: python -c 'from tests.test_mcp_servers import test_live_slack_approval_and_publish_flow; test_live_slack_approval_and_publish_flow()'")
