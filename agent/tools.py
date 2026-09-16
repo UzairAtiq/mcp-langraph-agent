@@ -1,77 +1,68 @@
+import sys
 from contextlib import AsyncExitStack
+from langchain_mcp_adapters.client import MultiServerMCPClient
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from langchain_mcp_adapters.client import MultiServerMCPClient
-import sys
 
-# standalone utility for manually testing a single MCP server in isolation.
-# not used by the main agent (which uses get_langgraph_tools + MultiServerMCPClient
-# below to connect to both servers at once). kept here for quick debugging -
-# e.g. testing one server's tools directly without spinning up the full agent.
-
+# standalone utility for manually testing a single mcp server in isolation
 class MCPClient:
-
-    #initializing the MCP client
     def __init__(self, server_module: str):
         self.server_module = server_module
         self.session: ClientSession | None = None
         self._stack = AsyncExitStack()
 
-    async def connect(self):
-
-        #setting the parameters to launch the MCP server
+    async def connect(self) -> None:
+        # configure stdio server parameters using current python interpreter
         params = StdioServerParameters(
             command=sys.executable,
             args=["-m", self.server_module],
         )
 
-        #launching the server and creating the communication channel
-        read, write = await self._stack.enter_async_context(
+        # establish stdio read and write channels
+        read_stream, write_stream = await self._stack.enter_async_context(
             stdio_client(params)
         )
 
-        #creating the MCP session
+        # initialize the mcp client session
         self.session = await self._stack.enter_async_context(
-            ClientSession(read, write)
+            ClientSession(read_stream, write_stream)
         )
-
-        #initializing the MCP session
         await self.session.initialize()
 
-    async def call_tool(self, name: str, args: dict):
+    async def call_tool(self, name: str, args: dict) -> str:
+        if not self.session:
+            raise RuntimeError("MCPClient is not connected. Call connect() first.")
 
-        #calling the MCP tool
         result = await self.session.call_tool(name, args)
-
-        #returning only the text content from the tool result
         return result.content[0].text
 
-    async def close(self):
-
-        #closing the MCP connection and cleaning up resources
+    async def close(self) -> None:
+        # clean up and close all async context stack resources
         await self._stack.aclose()
 
-async def get_langgraph_tools():
-
-    #Settinng up the client
+# fetch all tools across registered mcp servers for langgraph agent
+async def get_langgraph_tools() -> list:
+    # configure all mcp servers with stdio transport
     client = MultiServerMCPClient(
         {
-            #Mapping server names to configs
             "database": {
-                "command": "python",
+                "command": sys.executable,
                 "args": ["-m", "mcp_servers.db_server"],
                 "transport": "stdio",
             },
-
             "slack": {
-                "command": "python",
+                "command": sys.executable,
                 "args": ["-m", "mcp_servers.slack_server"],
+                "transport": "stdio",
+            },
+            "linkedin_post_generator": {
+                "command": sys.executable,
+                "args": ["-m", "mcp_servers.linkedin_post_generator"],
                 "transport": "stdio",
             },
         }
     )
-    #getting a list of all tools from the connected servers
-    tools = await client.get_tools()
 
-    #returning the tools list
+    # retrieve converted langchain structured tools from all active servers
+    tools = await client.get_tools()
     return tools

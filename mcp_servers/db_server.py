@@ -2,6 +2,7 @@ import os
 import psycopg
 from config.settings import DATABASE_URL
 from mcp.server.fastmcp import FastMCP
+from langgraph.prebuilt import ToolNode
 
 #Creating the mcp server 
 mcp = FastMCP("database-server")

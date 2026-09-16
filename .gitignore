@@ -32,3 +32,9 @@ htmlcov/
 
 # macOS
 .DS_Store
+
+# Storage / local data
+data/*.json
+
+# linkedin ignore
+.linkedin_token
