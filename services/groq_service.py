@@ -1,11 +1,13 @@
 import logging
 from groq import Groq
+from langfuse import observe
 from config.settings import GROQ_API_KEY, GROQ_MODEL
 
 # configure service logger
 logger = logging.getLogger("groq_service")
 
-# generate a linkedin post using the groq llm
+# generate a linkedin post using the groq llm with langfuse tracing
+@observe(name="generate_linkedin_post")
 def generate_linkedin_post_content(topic: str = "modern software engineering and AI agents") -> str:
     if not GROQ_API_KEY:
         raise ValueError("GROQ_API_KEY is not set. Please provide it in the .env file.")
