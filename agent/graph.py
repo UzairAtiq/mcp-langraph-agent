@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     # execute agent with user prompt and langfuse tracing
     async def run_agent_interactive():
-        print("🤖 Initializing LangGraph Agent with MCP tools and Langfuse tracing...")
+        print("Initializing LangGraph Agent with MCP tools and Langfuse tracing...")
         agent = await build_agent()
 
         prompt = (
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         )
 
         final_response = result["messages"][-1].content
-        print(f"\n🤖 Agent Final Response:\n{final_response}\n")
+        print(f"\nAgent Final Response:\n{final_response}\n")
 
     asyncio.run(run_agent_interactive())
 
