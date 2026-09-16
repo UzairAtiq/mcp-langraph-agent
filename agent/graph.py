@@ -37,3 +37,31 @@ async def build_agent():
 
     # compile and return executable agent
     return agent_builder.compile()
+
+
+if __name__ == "__main__":
+    import asyncio
+    from langchain_core.messages import HumanMessage
+    from observability.tracing import langfuse_handler
+
+    # execute agent with user prompt and langfuse tracing
+    async def run_agent_interactive():
+        print("🤖 Initializing LangGraph Agent with MCP tools and Langfuse tracing...")
+        agent = await build_agent()
+
+        prompt = (
+            "Create an engaging LinkedIn post about building production-grade AI agents "
+            "with Model Context Protocol (MCP), send it to Slack for user approval, and wait for the decision."
+        )
+        print(f"\n👤 User Prompt:\n{prompt}\n")
+
+        result = await agent.ainvoke(
+            {"messages": [HumanMessage(content=prompt)]},
+            config={"callbacks": [langfuse_handler]},
+        )
+
+        final_response = result["messages"][-1].content
+        print(f"\n🤖 Agent Final Response:\n{final_response}\n")
+
+    asyncio.run(run_agent_interactive())
+
