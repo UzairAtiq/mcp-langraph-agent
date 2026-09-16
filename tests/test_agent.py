@@ -34,17 +34,17 @@ def test_build_agent():
 # test full end-to-end agent invocation with langgraph
 async def run_agent_invocation_test():
     agent = await build_agent()
-    
+
     # send prompt asking to list generated posts or inspect a post
     test_state = {
         "messages": [
             HumanMessage(content="Use your tool to list all generated LinkedIn posts and tell me how many exist.")
         ]
     }
-    
+
     result = await agent.ainvoke(test_state)
     messages = result["messages"]
-    
+
     # assert that the agent executed and produced a final response
     assert len(messages) >= 2
     final_message = messages[-1]
@@ -53,3 +53,9 @@ async def run_agent_invocation_test():
 
 def test_agent_invocation():
     asyncio.run(run_agent_invocation_test())
+
+if __name__ == "__main__":
+    print("Running LangGraph agent tests...")
+    test_get_langgraph_tools()
+    test_build_agent()
+    print("🎉 All LangGraph agent tests completed successfully!")
