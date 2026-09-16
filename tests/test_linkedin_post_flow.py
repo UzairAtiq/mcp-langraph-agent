@@ -173,7 +173,5 @@ if __name__ == "__main__":
     print("   ✓ test_api_endpoints passed")
 
     print("\n🎉 All LinkedIn post flow unit tests passed successfully!")
-    print("\nTo run the live interactive human-approval test:")
-    print("  1. Ensure FastAPI server is running: uvicorn api.main:app --port 8000")
-    print("  2. Ensure ngrok is running: ngrok http 8000")
-    print("  3. Run: python -c 'from tests.test_linkedin_post_flow import test_live_slack_approval_and_publish_flow; test_live_slack_approval_and_publish_flow()'")
+    print("\nExecuting live interactive Slack approval and publish flow...")
+    test_live_slack_approval_and_publish_flow()
