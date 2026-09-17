@@ -3,7 +3,7 @@ import logging
 from typing import Annotated
 from fastapi import FastAPI, Form, HTTPException, Response, status
 from data.post_storage import get_post_by_id, list_posts
-from services.slack_service import process_slack_action
+from services.slack_service import record_slack_decision
 
 # configure application logger
 logging.basicConfig(level=logging.INFO)
@@ -85,8 +85,8 @@ async def handle_slack_interactions(payload: Annotated[str, Form()]) -> Response
         logger.error("missing post_id in action value")
         return Response(status_code=status.HTTP_200_OK)
 
-    # process the action and execute linkedin publishing or discard
-    process_slack_action(
+    # record user decision in storage; polling mcp tool executes publishing
+    record_slack_decision(
         action_id=action_id,
         post_id=post_id,
         response_url=response_url,
