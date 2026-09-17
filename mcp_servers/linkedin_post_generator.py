@@ -12,7 +12,6 @@ from services.groq_service import generate_linkedin_post_content
 from services.linkedin_service import fetch_linkedin_person_urn
 from services.slack_service import (
     execute_post_decision,
-    process_slack_action,
     record_slack_decision,
     send_approval_request,
 )
@@ -134,7 +133,10 @@ def wait_for_approval_decision(post_id: str, timeout_seconds: int = 60) -> dict:
 def approve_or_discard_post_directly(post_id: str, action: str = "approve") -> dict:
     """Directly approve or discard a pending post without using Slack UI."""
     action_id = "approve_linkedin_post" if action.lower() in ("approve", "yes") else "discard_linkedin_post"
-    return process_slack_action(action_id=action_id, post_id=post_id)
+    record_result = record_slack_decision(action_id=action_id, post_id=post_id)
+    if not record_result.get("success"):
+        return record_result
+    return execute_post_decision(post_id=post_id)
 
 # mcp tool: check the status of a specific post by id
 @mcp.tool()

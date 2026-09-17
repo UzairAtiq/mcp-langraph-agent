@@ -263,13 +263,4 @@ def execute_post_decision(post_id: str) -> dict:
 
     return {"success": False, "error": f"Post '{post_id}' is in unhandled state: '{current_status}'"}
 
-# convenience function to record and immediately execute action
-def process_slack_action(
-    action_id: str,
-    post_id: str,
-    response_url: str | None = None,
-) -> dict:
-    record_result = record_slack_decision(action_id=action_id, post_id=post_id, response_url=response_url)
-    if not record_result.get("success"):
-        return record_result
-    return execute_post_decision(post_id=post_id)
+
