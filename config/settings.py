@@ -9,13 +9,24 @@ load_dotenv()
 # base project directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# port configuration for cloud host (Render, Railway, Heroku)
+PORT = int(os.getenv("PORT", "8000"))
+
 # groq llm configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("GROK_API_KEY")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
 # database and slack configuration
-DATABASE_URL = os.getenv("CONNECTION_STRING_SUPABASE")
+DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("CONNECTION_STRING_SUPABASE")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
+
+# linkedin oauth credentials and configuration
+LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
+LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
+LINKEDIN_REDIRECT_URI = os.getenv(
+    "LINKEDIN_REDIRECT_URI",
+    "http://localhost:8000/linkedin/callback",
+)
 
 # langfuse observability configuration
 LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY")
@@ -26,15 +37,23 @@ LANGFUSE_BASE_URL = os.getenv("LANGFUSE_BASE_URL") or os.getenv("LANGFUSE_HOST")
 if LANGFUSE_BASE_URL and not os.getenv("LANGFUSE_HOST"):
     os.environ["LANGFUSE_HOST"] = LANGFUSE_BASE_URL
 
-# storage path for posts
+# storage path for posts fallback
 POSTS_STORAGE_PATH = os.getenv(
     "POSTS_STORAGE_PATH",
     str(BASE_DIR / "data" / "posts.json"),
 )
 
-# helper function to load linkedin access token from file or env
+# helper function to load valid linkedin access token dynamically
 def get_linkedin_access_token() -> str | None:
-    # check explicit environment variable first
+    try:
+        from data.token_storage import get_valid_linkedin_access_token
+        token = get_valid_linkedin_access_token()
+        if token:
+            return token
+    except Exception:
+        pass
+
+    # check explicit environment variable fallback
     token_from_env = os.getenv("LINKEDIN_ACCESS_TOKEN")
     if token_from_env:
         return token_from_env.strip()
@@ -48,8 +67,16 @@ def get_linkedin_access_token() -> str | None:
 
     return None
 
-# helper function to extract person urn from LINKEDIN_PROFILE_ID or LINKEDIN_PERSON_URN
+# helper function to extract person urn dynamically from database or env
 def get_linkedin_person_urn() -> str | None:
+    try:
+        from data.token_storage import get_stored_person_urn
+        stored_urn = get_stored_person_urn()
+        if stored_urn:
+            return stored_urn.strip()
+    except Exception:
+        pass
+
     # check explicit person urn in environment
     direct_urn = os.getenv("LINKEDIN_PERSON_URN")
     if direct_urn:
@@ -72,6 +99,6 @@ def get_linkedin_person_urn() -> str | None:
 
     return None
 
-# resolved global token and person urn defaults
+# lazy resolution properties
 LINKEDIN_ACCESS_TOKEN = get_linkedin_access_token()
 LINKEDIN_PERSON_URN = get_linkedin_person_urn()

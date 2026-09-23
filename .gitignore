@@ -36,6 +36,8 @@ htmlcov/
 
 # Storage / local data
 data/*.json
+*.db
+data/*.db
 
 # linkedin ignore
 .linkedin_token

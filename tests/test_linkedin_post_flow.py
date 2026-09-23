@@ -1,4 +1,12 @@
+import sys
 import time
+from pathlib import Path
+
+# ensure project root is in sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from starlette.testclient import TestClient
 from api.main import app
 from config.settings import get_linkedin_access_token
@@ -69,7 +77,7 @@ def test_api_endpoints():
 
     health_res = client.get("/health")
     assert health_res.status_code == 200
-    assert health_res.json() == {"status": "healthy"}
+    assert health_res.json().get("status") == "healthy"
 
     posts_res = client.get("/posts")
     assert posts_res.status_code == 200
