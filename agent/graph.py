@@ -1,12 +1,12 @@
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
-from agent.state import MessagesState
 from agent.nodes import (
     bind_llm_with_tools,
     get_tools,
     make_agent_node,
     should_continue,
 )
+from agent.state import MessagesState
 
 # compile and return the complete langgraph agent graph
 async def build_agent():
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     from observability.tracing import langfuse_handler
 
     # execute agent with user prompt and langfuse tracing
-    async def run_agent_interactive():
+    async def run_agent_interactive() -> None:
         print("Initializing LangGraph Agent with MCP tools and Langfuse tracing...")
         agent = await build_agent()
 
@@ -55,6 +55,7 @@ if __name__ == "__main__":
         )
         print(f"\n👤 User Prompt:\n{prompt}\n")
 
+        # invoke compiled agent graph
         result = await agent.ainvoke(
             {"messages": [HumanMessage(content=prompt)]},
             config={"callbacks": [langfuse_handler]},

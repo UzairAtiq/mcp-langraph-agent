@@ -1,17 +1,16 @@
+import json
 from langchain_groq import ChatGroq
 from config.settings import GROQ_API_KEY
-import json
 
-# separate llm just for judging, no tools needed here
+# initialize standalone llm instance for evaluation
 judge_llm = ChatGroq(
     model="openai/gpt-oss-120b",
-    api_key=GROQ_API_KEY
+    api_key=GROQ_API_KEY,
 )
 
-
-async def judge_response(result):
-
-    # build the prompt for the judge using values from the result dict
+# evaluate single agent execution result against expected behavior
+async def judge_response(result: dict) -> dict:
+    # construct evaluation prompt from test execution details
     judge_prompt = f"""
 you are evaluating an ai agent's response.
 
@@ -25,14 +24,14 @@ respond only in this json format, nothing else:
 {{"score": "pass" or "fail", "reasoning": "one short sentence"}}
 """
 
-    # ask the judge llm
+    # request evaluation verdict from judge model
     response = await judge_llm.ainvoke(judge_prompt)
 
-    # try to parse the json reply
+    # parse json structure from response text
     try:
         clean_text = response.content.replace("```json", "").replace("```", "").strip()
         verdict = json.loads(clean_text)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, AttributeError):
         verdict = {"score": "error", "reasoning": "could not parse judge response"}
 
     return verdict

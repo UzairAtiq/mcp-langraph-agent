@@ -10,7 +10,7 @@ from config.settings import GROQ_API_KEY, GROQ_MODEL
 # configure logger for agent nodes
 logger = logging.getLogger("agent_nodes")
 
-# system prompt instructing the agent on workflow termination
+# system prompt instructing agent on workflow behavior and termination
 SYSTEM_PROMPT = (
     "You are an AI assistant managing LinkedIn post generation, Slack approvals, and publishing.\n"
     "Follow these operating instructions:\n"
@@ -34,12 +34,15 @@ async def get_tools() -> list:
 def bind_llm_with_tools(tools: list) -> ChatGroq:
     return llm.bind_tools(tools)
 
-# factory to create the agent node closure
+# factory to create the agent node execution closure
 def make_agent_node(llm_with_tools) -> Callable:
     async def agent_node(state: MessagesState) -> dict:
+        # prepend system instructions if not already present
         messages = list(state["messages"])
         if not messages or not isinstance(messages[0], SystemMessage):
             messages = [SystemMessage(content=SYSTEM_PROMPT)] + messages
+
+        # invoke llm with current message history
         response = await llm_with_tools.ainvoke(messages)
         return {"messages": [response]}
 

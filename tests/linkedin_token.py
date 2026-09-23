@@ -68,8 +68,9 @@ def fetch_user_profile(access_token: str) -> dict:
 
 # exchange authorization code for access token and update environment
 def exchange_code_for_token(code: str) -> bool:
+    # validate required credentials existence
     if not CLIENT_ID or not CLIENT_SECRET:
-        print(f"ERROR: LINKEDIN_CLIENT_ID or LINKEDIN_CLIENT_SECRET missing from {ENV_FILE_PATH}")
+        print(f"error: LINKEDIN_CLIENT_ID or LINKEDIN_CLIENT_SECRET missing from {ENV_FILE_PATH}")
         return False
 
     request_payload = {
@@ -80,6 +81,7 @@ def exchange_code_for_token(code: str) -> bool:
         "client_secret": CLIENT_SECRET,
     }
 
+    # execute post request to token exchange endpoint
     try:
         response = requests.post(
             TOKEN_URL,
@@ -91,12 +93,14 @@ def exchange_code_for_token(code: str) -> bool:
         print(f"network error during token exchange: {err}")
         return False
 
+    # parse response payload json
     try:
         token_payload = response.json()
     except ValueError:
         print(f"non-json response received: {response.text}")
         return False
 
+    # verify presence of access token
     if "access_token" not in token_payload:
         print("token exchange failed:")
         print(f"  error: {token_payload.get('error')}")

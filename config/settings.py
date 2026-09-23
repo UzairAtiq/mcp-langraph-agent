@@ -22,14 +22,14 @@ LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY")
 LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY")
 LANGFUSE_BASE_URL = os.getenv("LANGFUSE_BASE_URL") or os.getenv("LANGFUSE_HOST")
 
+# sync langfuse host environment variable if base url is configured
 if LANGFUSE_BASE_URL and not os.getenv("LANGFUSE_HOST"):
     os.environ["LANGFUSE_HOST"] = LANGFUSE_BASE_URL
-
 
 # storage path for posts
 POSTS_STORAGE_PATH = os.getenv(
     "POSTS_STORAGE_PATH",
-    str(BASE_DIR / "data" / "posts.json")
+    str(BASE_DIR / "data" / "posts.json"),
 )
 
 # helper function to load linkedin access token from file or env
@@ -72,5 +72,6 @@ def get_linkedin_person_urn() -> str | None:
 
     return None
 
+# resolved global token and person urn defaults
 LINKEDIN_ACCESS_TOKEN = get_linkedin_access_token()
 LINKEDIN_PERSON_URN = get_linkedin_person_urn()

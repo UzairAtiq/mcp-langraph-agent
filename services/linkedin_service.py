@@ -1,6 +1,6 @@
 import logging
 import requests
-from config.settings import LINKEDIN_ACCESS_TOKEN, LINKEDIN_PERSON_URN, get_linkedin_access_token
+from config.settings import LINKEDIN_PERSON_URN, get_linkedin_access_token
 
 # configure linkedin service logger
 logger = logging.getLogger("linkedin_service")
@@ -12,6 +12,7 @@ LINKEDIN_UGC_POST_URL = "https://api.linkedin.com/v2/ugcPosts"
 
 # fetch the linkedin person urn using the access token
 def fetch_linkedin_person_urn(access_token: str | None = None) -> str:
+    # retrieve access token from argument or environment/file fallback
     token = access_token or get_linkedin_access_token()
     if not token:
         raise ValueError("LinkedIn access token is missing. Please authenticate first.")
@@ -44,6 +45,7 @@ def fetch_linkedin_person_urn(access_token: str | None = None) -> str:
     except requests.RequestException as err:
         logger.warning(f"failed to fetch member id from /v2/me endpoint: {err}")
 
+    # raise error when all urn resolution methods fail
     raise RuntimeError("unable to resolve LinkedIn Person URN using provided access token")
 
 # publish a text post to linkedin
@@ -52,10 +54,12 @@ def publish_post_to_linkedin(
     access_token: str | None = None,
     person_urn: str | None = None,
 ) -> dict:
+    # retrieve access token from argument or configuration
     token = access_token or get_linkedin_access_token()
     if not token:
         raise ValueError("LinkedIn access token is missing. Cannot publish post.")
 
+    # determine author urn using explicit parameter or dynamic lookup
     author_urn = person_urn or fetch_linkedin_person_urn(token)
 
     headers = {
@@ -79,6 +83,7 @@ def publish_post_to_linkedin(
     }
 
     try:
+        # submit post payload to linkedin ugc posts endpoint
         response = requests.post(
             LINKEDIN_UGC_POST_URL,
             headers=headers,
@@ -86,6 +91,7 @@ def publish_post_to_linkedin(
             timeout=15,
         )
 
+        # handle successful response
         if response.status_code in (200, 201):
             response_json = response.json() if response.text else {}
             post_urn = response_json.get("id") or response.headers.get("x-restli-id", "")
@@ -96,16 +102,18 @@ def publish_post_to_linkedin(
                 "author": author_urn,
                 "response": response_json,
             }
-        else:
-            logger.error(f"LinkedIn publishing failed ({response.status_code}): {response.text}")
-            return {
-                "success": False,
-                "status": "failed",
-                "status_code": response.status_code,
-                "error": response.text,
-            }
+
+        # handle api error response
+        logger.error(f"LinkedIn publishing failed ({response.status_code}): {response.text}")
+        return {
+            "success": False,
+            "status": "failed",
+            "status_code": response.status_code,
+            "error": response.text,
+        }
 
     except requests.RequestException as err:
+        # handle network and connection errors
         logger.error(f"network error while publishing post to LinkedIn: {err}")
         return {
             "success": False,

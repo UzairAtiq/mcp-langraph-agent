@@ -1,11 +1,11 @@
 import json
-import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from config.constants import PostStatus
 from config.settings import POSTS_STORAGE_PATH
 
-# ensure the parent directory for posts storage exists
+# ensure parent directory and storage file exist
 def _ensure_storage_directory() -> Path:
     storage_path = Path(POSTS_STORAGE_PATH)
     storage_path.parent.mkdir(parents=True, exist_ok=True)
@@ -29,7 +29,7 @@ def _save_all_posts(posts: dict[str, dict]) -> None:
     storage_path = _ensure_storage_directory()
     storage_path.write_text(json.dumps(posts, indent=2), encoding="utf-8")
 
-# generate a sequential or human-readable unique post id
+# generate a sequential unique post id
 def generate_next_post_id() -> str:
     posts = load_all_posts()
     existing_count = len(posts) + 1
@@ -42,17 +42,18 @@ def save_post_record(
     content: str,
     profile_id: str,
     access_token: str,
-    status: str = "pending",
+    status: str | PostStatus = PostStatus.PENDING,
 ) -> dict:
     posts = load_all_posts()
     timestamp = datetime.now(timezone.utc).isoformat()
 
+    # construct full post record
     post_record = {
         "post_id": post_id,
         "content": content,
         "profile_id": profile_id,
         "access_token": access_token,
-        "status": status,
+        "status": status.value if isinstance(status, PostStatus) else str(status),
         "created_at": timestamp,
         "updated_at": timestamp,
         "linkedin_response": None,
@@ -70,18 +71,21 @@ def get_post_by_id(post_id: str) -> dict | None:
 # update the status and optional extra data for an existing post
 def update_post_status(
     post_id: str,
-    status: str,
+    status: str | PostStatus,
     extra_data: dict | None = None,
 ) -> dict | None:
     posts = load_all_posts()
     post_record = posts.get(post_id)
 
+    # return none if post does not exist
     if not post_record:
         return None
 
-    post_record["status"] = status
+    # update status and timestamp
+    post_record["status"] = status.value if isinstance(status, PostStatus) else str(status)
     post_record["updated_at"] = datetime.now(timezone.utc).isoformat()
 
+    # merge extra fields if provided
     if extra_data:
         for key, value in extra_data.items():
             post_record[key] = value

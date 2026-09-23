@@ -1,13 +1,14 @@
 import logging
 import time
-from mcp.server.fastmcp import FastMCP
+from config.constants import PostStatus
 from config.settings import get_linkedin_access_token
 from data.post_storage import (
     generate_next_post_id,
-    save_post_record,
     get_post_by_id,
     list_posts,
+    save_post_record,
 )
+from mcp.server.fastmcp import FastMCP
 from services.groq_service import generate_linkedin_post_content
 from services.linkedin_service import fetch_linkedin_person_urn
 from services.slack_service import (
@@ -32,7 +33,6 @@ def generate_and_request_approval(
 ) -> dict:
     """Generate a LinkedIn post using Groq LLM, save it locally, and send to Slack with Approve/Discard buttons.
     If wait_for_decision is True, it will wait for the user to click Yes or No in Slack before returning."""
-
     # ensure linkedin access token is present
     token = get_linkedin_access_token()
     if not token:
@@ -63,12 +63,12 @@ def generate_and_request_approval(
     internal_post_id = generate_next_post_id()
 
     # save post record to persistent storage with pending status
-    saved_record = save_post_record(
+    save_post_record(
         post_id=internal_post_id,
         content=post_content,
         profile_id=person_urn,
         access_token=token,
-        status="pending",
+        status=PostStatus.PENDING,
     )
 
     # send block kit approval request to slack
@@ -77,7 +77,7 @@ def generate_and_request_approval(
         content=post_content,
     )
 
-    # if not waiting for decision, return pending status immediately
+    # return immediately if asynchronous flow requested
     if not wait_for_decision:
         return {
             "success": True,
@@ -100,19 +100,21 @@ def wait_for_approval_decision(post_id: str, timeout_seconds: int = 60) -> dict:
     poll_interval = 2.0
 
     while time.time() - start_time < timeout_seconds:
+        # retrieve post state from storage
         record = get_post_by_id(post_id)
         if not record:
             return {"success": False, "error": f"Post '{post_id}' not found."}
 
         current_status = record.get("status")
 
-        # if a decision has been made in slack (approved or discarded) or already processed
-        if current_status in ("approved", "discarded"):
-            execution_result = execute_post_decision(post_id=post_id)
-            return execution_result
-        elif current_status in ("published", "rejected", "publish_failed"):
+        # execute decision if approved or discarded in slack
+        if current_status in (PostStatus.APPROVED, PostStatus.DISCARDED):
+            return execute_post_decision(post_id=post_id)
+
+        # return finalized status if already resolved
+        if current_status in (PostStatus.PUBLISHED, PostStatus.REJECTED, PostStatus.PUBLISH_FAILED):
             return {
-                "success": current_status == "published",
+                "success": current_status == PostStatus.PUBLISHED,
                 "post_id": post_id,
                 "status": current_status,
                 "linkedin_response": record.get("linkedin_response"),
@@ -121,6 +123,7 @@ def wait_for_approval_decision(post_id: str, timeout_seconds: int = 60) -> dict:
 
         time.sleep(poll_interval)
 
+    # return timeout error if no user interaction detected within window
     return {
         "success": False,
         "post_id": post_id,
@@ -132,6 +135,7 @@ def wait_for_approval_decision(post_id: str, timeout_seconds: int = 60) -> dict:
 @mcp.tool()
 def approve_or_discard_post_directly(post_id: str, action: str = "approve") -> dict:
     """Directly approve or discard a pending post without using Slack UI."""
+    # map action string to internal action identifier
     action_id = "approve_linkedin_post" if action.lower() in ("approve", "yes") else "discard_linkedin_post"
     record_result = record_slack_decision(action_id=action_id, post_id=post_id)
     if not record_result.get("success"):
@@ -146,6 +150,7 @@ def get_post_details(post_id: str) -> dict:
     if not record:
         return {"found": False, "error": f"Post with ID '{post_id}' not found."}
 
+    # mask sensitive access token in output
     safe_record = dict(record)
     if safe_record.get("access_token"):
         safe_record["access_token"] = safe_record["access_token"][:10] + "..."

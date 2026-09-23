@@ -21,9 +21,10 @@ app = FastAPI(
 def health_check() -> dict:
     return {"status": "healthy"}
 
-# list all saved posts
+# list all saved posts with optional status filter
 @app.get("/posts")
 def get_all_posts(status_filter: str | None = None) -> dict:
+    # retrieve posts from persistent storage
     records = list_posts()
     if status_filter:
         records = [
@@ -44,6 +45,7 @@ def get_all_posts(status_filter: str | None = None) -> dict:
 # retrieve a single post by id
 @app.get("/posts/{post_id}")
 def get_single_post(post_id: str) -> dict:
+    # lookup post by id
     record = get_post_by_id(post_id)
     if not record:
         raise HTTPException(
@@ -51,6 +53,7 @@ def get_single_post(post_id: str) -> dict:
             detail=f"Post '{post_id}' not found.",
         )
 
+    # mask sensitive access token
     safe_copy = dict(record)
     if safe_copy.get("access_token"):
         safe_copy["access_token"] = safe_copy["access_token"][:10] + "..."
@@ -69,6 +72,7 @@ async def handle_slack_interactions(payload: Annotated[str, Form()]) -> Response
             detail="Invalid JSON payload format.",
         )
 
+    # extract actions array from interaction payload
     actions = interaction_data.get("actions", [])
     if not actions:
         logger.warning("received Slack interaction without any actions")
@@ -85,7 +89,7 @@ async def handle_slack_interactions(payload: Annotated[str, Form()]) -> Response
         logger.error("missing post_id in action value")
         return Response(status_code=status.HTTP_200_OK)
 
-    # record user decision in storage; polling mcp tool executes publishing
+    # record user decision in storage for mcp polling handler
     record_slack_decision(
         action_id=action_id,
         post_id=post_id,

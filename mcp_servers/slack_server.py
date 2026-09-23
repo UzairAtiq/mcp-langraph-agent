@@ -1,45 +1,40 @@
-import os
 import requests
-from dotenv import load_dotenv
+from config.settings import SLACK_WEBHOOK_URL
 from mcp.server.fastmcp import FastMCP
-from config.settings import SLACK_WEBHOOK_URL 
 
-#creating the mcp server
+# initialize slack mcp server
 mcp = FastMCP("slack-server")
 
-#defining the mcp tool for sending a slack message
+# mcp tool: send a message to slack via webhook
 @mcp.tool()
 def send_slack_message(message: str) -> dict:
     """Send a message to the configured Slack channel via webhook."""
-
-    #return error if the slack webhook url is not set
+    # return error if webhook url is missing
     if not SLACK_WEBHOOK_URL:
         return {"error": "SLACK_WEBHOOK_URL not set in .env"}
 
     try:
-        #sending the message to slack
+        # post message text to webhook
         response = requests.post(
             SLACK_WEBHOOK_URL,
             json={"text": message},
             timeout=5,
         )
 
-        #return success if the message was sent
+        # return success status if message sent
         if response.status_code == 200:
             return {"status": "sent", "message": message}
 
-        #return error if slack returns an unsuccessful status
-        else:
-            return {
-                "error": f"Slack returned status {response.status_code}",
-                "details": response.text,
-            }
+        # return error response on non-200 status
+        return {
+            "error": f"Slack returned status {response.status_code}",
+            "details": response.text,
+        }
 
-    #return error if the request fails
     except requests.RequestException as e:
+        # return error if network request fails
         return {"error": str(e)}
 
-
-#start the mcp server when this file is run directly
+# run server directly if executed
 if __name__ == "__main__":
     mcp.run()
