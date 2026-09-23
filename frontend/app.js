@@ -13,6 +13,7 @@ async function loadStatus() {
         const urnEl = document.getElementById("person-urn");
         const expEl = document.getElementById("token-expiry");
         const dbEl = document.getElementById("db-type");
+        const redirectEl = document.getElementById("redirect-uri");
 
         if (token.authenticated) {
             badgeEl.className = "badge badge-success";
@@ -27,6 +28,9 @@ async function loadStatus() {
         }
 
         dbEl.innerText = health.database === "postgresql" ? "PostgreSQL" : "SQLite (data/app.db)";
+        if (redirectEl) {
+            redirectEl.innerText = token.redirect_uri || `${window.location.origin}/linkedin/callback`;
+        }
     } catch (err) {
         console.error("failed to load status", err);
     }

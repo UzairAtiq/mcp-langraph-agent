@@ -4,7 +4,7 @@ import urllib.parse
 import uuid
 from pathlib import Path
 from typing import Annotated, Any
-from fastapi import FastAPI, Form, HTTPException, Query, Response, status
+from fastapi import FastAPI, Form, HTTPException, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 import requests
@@ -73,20 +73,35 @@ def health_check() -> dict[str, Any]:
         "linkedin_authenticated": token_valid,
     }
 
+# resolve effective redirect uri from explicit config or incoming request headers
+def get_effective_redirect_uri(request: Request) -> str:
+    # check explicit non-localhost redirect uri in environment
+    if LINKEDIN_REDIRECT_URI and not LINKEDIN_REDIRECT_URI.startswith("http://localhost") and not LINKEDIN_REDIRECT_URI.startswith("http://127.0.0.1"):
+        return LINKEDIN_REDIRECT_URI.strip()
+
+    # detect protocol and host from cloud reverse proxy headers (e.g. Render, Railway)
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host", request.headers.get("host", request.url.netloc))
+    if host and "localhost" not in host and "127.0.0.1" not in host:
+        return f"{proto}://{host}/linkedin/callback"
+
+    return LINKEDIN_REDIRECT_URI or f"{proto}://{host}/linkedin/callback"
+
 # linkedin oauth authorization redirect
 @app.get("/linkedin/login")
-def linkedin_login() -> RedirectResponse:
+def linkedin_login(request: Request) -> RedirectResponse:
     if not LINKEDIN_CLIENT_ID:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="LINKEDIN_CLIENT_ID is not configured in environment.",
         )
 
+    redirect_uri = get_effective_redirect_uri(request)
     oauth_state = uuid.uuid4().hex
     params = {
         "response_type": "code",
         "client_id": LINKEDIN_CLIENT_ID,
-        "redirect_uri": LINKEDIN_REDIRECT_URI,
+        "redirect_uri": redirect_uri,
         "state": oauth_state,
         "scope": "openid profile w_member_social email",
     }
@@ -97,6 +112,7 @@ def linkedin_login() -> RedirectResponse:
 @app.get("/linkedin/callback", response_class=HTMLResponse)
 @app.get("/callback", response_class=HTMLResponse)
 async def linkedin_callback(
+    request: Request,
     code: str | None = Query(default=None),
     state: str | None = Query(default=None),
     error: str | None = Query(default=None),
@@ -125,11 +141,12 @@ async def linkedin_callback(
         )
 
     # exchange authorization code for access and refresh tokens
+    redirect_uri = get_effective_redirect_uri(request)
     token_url = "https://www.linkedin.com/oauth/v2/accessToken"
     payload = {
         "grant_type": "authorization_code",
         "code": code.strip(),
-        "redirect_uri": LINKEDIN_REDIRECT_URI,
+        "redirect_uri": redirect_uri,
         "client_id": LINKEDIN_CLIENT_ID,
         "client_secret": LINKEDIN_CLIENT_SECRET,
     }
@@ -217,11 +234,13 @@ async def linkedin_callback(
 
 # linkedin token metadata endpoint
 @app.get("/linkedin/status")
-def linkedin_status() -> dict[str, Any]:
+def linkedin_status(request: Request) -> dict[str, Any]:
     record = get_linkedin_token_record()
+    effective_uri = get_effective_redirect_uri(request)
     if not record:
         return {
             "authenticated": False,
+            "redirect_uri": effective_uri,
             "message": "No LinkedIn token found. Please visit /linkedin/login to authenticate.",
         }
 
@@ -231,6 +250,7 @@ def linkedin_status() -> dict[str, Any]:
     return {
         "authenticated": True,
         "token_preview": masked_token,
+        "redirect_uri": effective_uri,
         "person_urn": record.get("person_urn"),
         "expires_at": str(record.get("expires_at")),
         "refresh_token_available": bool(record.get("refresh_token")),
