@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Authentication Successful</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .callback-container {
+            max-width: 520px;
+            margin: 60px auto;
+            text-align: center;
+        }
+        .icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+        .details-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            text-align: left;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container callback-container">
+        <div class="card">
+            <div class="icon">✅</div>
+            <h2>LinkedIn Connected Successfully</h2>
+            <p class="subtitle">OAuth tokens have been saved to your persistent database with automatic background token refresh enabled.</p>
+            
+            <div class="details-box">
+                <div class="info-row">
+                    <span class="info-label">User:</span>
+                    <span class="info-value">{{USER_NAME}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Person URN:</span>
+                    <span class="info-value">{{PERSON_URN}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Expires In:</span>
+                    <span class="info-value">{{EXPIRES_IN}} seconds</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Refresh Token:</span>
+                    <span class="info-value">{{REFRESH_STATUS}}</span>
+                </div>
+            </div>
+
+            <a href="/" class="btn">Return to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

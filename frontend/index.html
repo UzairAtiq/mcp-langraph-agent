@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Agent Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LinkedIn Agent & Slack Interactivity Hub</h1>
+            <p class="subtitle">Unified service for LLM content generation, human-in-the-loop Slack approvals, and LinkedIn publishing.</p>
+        </header>
+
+        <div class="grid-2">
+            <!-- System & Token Status Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span>OAuth & Storage Status</span>
+                    <span id="auth-badge" class="badge">Checking...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">LinkedIn Person URN:</span>
+                    <span id="person-urn" class="info-value">Loading...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Token Expiration:</span>
+                    <span id="token-expiry" class="info-value">Loading...</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Database Backend:</span>
+                    <span id="db-type" class="info-value">Loading...</span>
+                </div>
+
+                <div class="btn-group">
+                    <a href="/linkedin/login" class="btn">Connect LinkedIn</a>
+                    <a href="/docs" class="btn btn-secondary" target="_blank">Swagger Docs</a>
+                </div>
+            </div>
+
+            <!-- Test Post Trigger Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span>Generate Test Post</span>
+                </div>
+                <form id="generate-form">
+                    <div class="form-group">
+                        <label for="topic-input">Post Topic</label>
+                        <input type="text" id="topic-input" placeholder="e.g. AI advancements and modern software engineering" required>
+                    </div>
+                    <button type="submit" id="generate-btn" class="btn">Generate & Send to Slack</button>
+                    <div id="generate-result" style="margin-top: 10px; font-size: 13px;"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Posts Card -->
+        <div class="card">
+            <div class="card-title">
+                <span>Recent Posts</span>
+                <button onclick="loadPosts()" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;">Refresh</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 140px;">Post ID</th>
+                        <th>Content</th>
+                        <th style="width: 110px;">Status</th>
+                        <th style="width: 170px;">Created At</th>
+                    </tr>
+                </thead>
+                <tbody id="posts-tbody"></tbody>
+            </table>
+            <div id="empty-posts" class="empty-state" style="display: none;">
+                No posts recorded yet. Click "Generate & Send to Slack" above to create your first post!
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

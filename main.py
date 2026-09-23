@@ -2,12 +2,15 @@ import json
 import logging
 import urllib.parse
 import uuid
+from pathlib import Path
 from typing import Annotated, Any
 from fastapi import FastAPI, Form, HTTPException, Query, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 import requests
 from config.constants import PostStatus
 from config.settings import (
+    BASE_DIR,
     DATABASE_URL,
     LINKEDIN_CLIENT_ID,
     LINKEDIN_CLIENT_SECRET,
@@ -46,21 +49,18 @@ app = FastAPI(
     version="2.0.0",
 )
 
+# mount frontend static files directory
+FRONTEND_DIR = BASE_DIR / "frontend"
+if FRONTEND_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+
 # root dashboard endpoint
 @app.get("/", response_class=HTMLResponse)
-async def root_dashboard() -> str:
-    token_record = get_linkedin_token_record()
-    is_authenticated = bool(token_record and token_record.get("access_token"))
-    person_urn = token_record.get("person_urn") if token_record else "Not configured"
-    expires_at = token_record.get("expires_at") if token_record else "N/A"
-    db_backend = "PostgreSQL" if DATABASE_URL else "SQLite (data/app.db)"
-
-    return _render_dashboard_html(
-        is_authenticated=is_authenticated,
-        person_urn=person_urn,
-        expires_at=expires_at,
-        db_backend=db_backend,
-    )
+async def root_dashboard() -> HTMLResponse:
+    index_file = FRONTEND_DIR / "index.html"
+    if index_file.exists():
+        return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h2>LinkedIn Agent API Running</h2><a href='/docs'>Swagger Docs</a>")
 
 # health check endpoint for cloud hosts
 @app.get("/health")
@@ -101,12 +101,15 @@ async def linkedin_callback(
     error: str | None = Query(default=None),
     error_description: str | None = Query(default=None),
 ) -> HTMLResponse:
+    error_template = FRONTEND_DIR / "error.html"
+
     if error:
         logger.error(f"LinkedIn OAuth error: {error} - {error_description}")
-        return HTMLResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content=_render_error_html(error_description or error),
-        )
+        err_msg = error_description or error
+        if error_template.exists():
+            html_content = error_template.read_text(encoding="utf-8").replace("{{ERROR_MESSAGE}}", err_msg)
+            return HTMLResponse(status_code=status.HTTP_400_BAD_REQUEST, content=html_content)
+        return HTMLResponse(status_code=status.HTTP_400_BAD_REQUEST, content=f"<h2>Error: {err_msg}</h2>")
 
     if not code:
         raise HTTPException(
@@ -200,14 +203,16 @@ async def linkedin_callback(
 
     logger.info(f"successfully authenticated LinkedIn user: {user_name} ({person_urn})")
 
-    return HTMLResponse(
-        content=_render_callback_success_html(
-            user_name=user_name,
-            person_urn=person_urn,
-            expires_in=expires_in,
-            refresh_token=refresh_token,
-        )
-    )
+    callback_template = FRONTEND_DIR / "callback.html"
+    if callback_template.exists():
+        html = callback_template.read_text(encoding="utf-8")
+        html = html.replace("{{USER_NAME}}", user_name)
+        html = html.replace("{{PERSON_URN}}", person_urn)
+        html = html.replace("{{EXPIRES_IN}}", str(expires_in or "N/A"))
+        html = html.replace("{{REFRESH_STATUS}}", "Available (Auto-refresh on)" if refresh_token else "Standard Token")
+        return HTMLResponse(content=html)
+
+    return HTMLResponse(content=f"<h2>LinkedIn Connected! User: {user_name}</h2><a href='/'>Dashboard</a>")
 
 # linkedin token metadata endpoint
 @app.get("/linkedin/status")
@@ -356,138 +361,6 @@ def generate_post_endpoint(
         "slack_delivery": slack_res,
         "message": "Post generated and sent to Slack for user approval.",
     }
-
-# render dashboard html string
-def _render_dashboard_html(
-    is_authenticated: bool,
-    person_urn: str,
-    expires_at: Any,
-    db_backend: str,
-) -> str:
-    auth_badge = (
-        '<span style="color: #10b981; font-weight: bold; background: #ecfdf5; padding: 4px 10px; border-radius: 9999px;">Authenticated Active</span>'
-        if is_authenticated
-        else '<span style="color: #ef4444; font-weight: bold; background: #fef2f2; padding: 4px 10px; border-radius: 9999px;">Not Connected</span>'
-    )
-    return f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>LinkedIn Agent Service</title>
-        <style>
-            body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 40px 20px; }}
-            .container {{ max-width: 800px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 32px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border: 1px solid #334155; }}
-            h1 {{ color: #38bdf8; margin-top: 0; font-size: 28px; }}
-            .status-card {{ background: #0f172a; border-radius: 10px; padding: 20px; margin: 20px 0; border: 1px solid #334155; }}
-            .status-row {{ display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; }}
-            .status-row:last-child {{ border-bottom: none; }}
-            .btn {{ display: inline-block; background: #0284c7; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin-right: 12px; margin-top: 10px; transition: background 0.2s; }}
-            .btn:hover {{ background: #0369a1; }}
-            .btn-secondary {{ background: #334155; }}
-            .btn-secondary:hover {{ background: #475569; }}
-            .endpoint-list {{ background: #0f172a; border-radius: 10px; padding: 16px; font-family: monospace; font-size: 14px; margin-top: 20px; }}
-            .endpoint-list div {{ padding: 6px 0; color: #94a3b8; }}
-            .endpoint-list span {{ color: #38bdf8; font-weight: bold; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>LinkedIn Agent & Slack Interactivity Hub</h1>
-            <p>Unified microservice handling automated content generation, Slack approvals, and LinkedIn publishing.</p>
-            
-            <div class="status-card">
-                <div class="status-row">
-                    <span>LinkedIn OAuth Status:</span>
-                    {auth_badge}
-                </div>
-                <div class="status-row">
-                    <span>Person URN:</span>
-                    <span><code>{person_urn}</code></span>
-                </div>
-                <div class="status-row">
-                    <span>Token Expiration:</span>
-                    <span><code>{expires_at}</code></span>
-                </div>
-                <div class="status-row">
-                    <span>Database Storage:</span>
-                    <span><code>{db_backend}</code></span>
-                </div>
-            </div>
-
-            <div>
-                <a href="/linkedin/login" class="btn">Connect / Re-auth LinkedIn</a>
-                <a href="/docs" class="btn btn-secondary">Interactive Swagger Docs</a>
-                <a href="/posts" class="btn btn-secondary">View Posts JSON</a>
-            </div>
-
-            <h3>Available Endpoints</h3>
-            <div class="endpoint-list">
-                <div><span>GET  /health</span> - Service healthcheck for Render/Railway</div>
-                <div><span>GET  /linkedin/login</span> - Starts 1-click LinkedIn OAuth flow</div>
-                <div><span>GET  /linkedin/callback</span> - OAuth redirect endpoint</div>
-                <div><span>GET  /linkedin/status</span> - Token validity and expiration metadata</div>
-                <div><span>POST /linkedin/refresh</span> - Manually trigger token refresh</div>
-                <div><span>POST /slack/interactions</span> - Slack Block Kit interactive buttons webhook</div>
-                <div><span>GET  /posts</span> - List all generated posts</div>
-                <div><span>POST /posts/generate</span> - Test trigger post generation & Slack approval</div>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-
-# render callback success html
-def _render_callback_success_html(
-    user_name: str,
-    person_urn: str,
-    expires_in: Any,
-    refresh_token: Any,
-) -> str:
-    return f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>LinkedIn Authentication Successful</title>
-        <style>
-            body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 80vh; margin: 0; padding: 20px; }}
-            .card {{ max-width: 500px; background: #1e293b; border-radius: 16px; padding: 32px; text-align: center; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }}
-            .icon {{ font-size: 48px; margin-bottom: 16px; }}
-            h2 {{ color: #38bdf8; margin: 0 0 12px 0; }}
-            p {{ color: #94a3b8; line-height: 1.5; }}
-            .details {{ background: #0f172a; padding: 14px; border-radius: 8px; font-family: monospace; font-size: 13px; text-align: left; margin: 20px 0; color: #cbd5e1; word-break: break-all; }}
-            .btn {{ display: inline-block; background: #0284c7; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin-top: 10px; }}
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <div class="icon">🎉</div>
-            <h2>LinkedIn Connected Successfully!</h2>
-            <p>Your OAuth tokens have been securely saved to persistent database storage with automatic token refresh enabled.</p>
-            <div class="details">
-                <div><strong>User:</strong> {user_name}</div>
-                <div><strong>Person URN:</strong> {person_urn}</div>
-                <div><strong>Expires In:</strong> {expires_in} seconds</div>
-                <div><strong>Refresh Token:</strong> {'Available (Auto-refresh on)' if refresh_token else 'Standard token'}</div>
-            </div>
-            <a href="/" class="btn">Return to Dashboard</a>
-        </div>
-    </body>
-    </html>
-    """
-
-# render error html
-def _render_error_html(error_message: str) -> str:
-    return f"""
-    <div style="font-family: sans-serif; padding: 40px; text-align: center; background: #0f172a; color: white; min-height: 50vh;">
-        <h2 style="color: #ef4444;">❌ LinkedIn Authorization Failed</h2>
-        <p style="color: #94a3b8;">{error_message}</p>
-        <a href="/linkedin/login" style="padding: 10px 20px; background: #0284c7; color: white; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 15px;">Try Again</a>
-    </div>
-    """
 
 # run server directly when executed
 if __name__ == "__main__":

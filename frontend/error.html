@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Authorization Failed</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .error-container {
+            max-width: 500px;
+            margin: 60px auto;
+            text-align: center;
+        }
+        .icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container error-container">
+        <div class="card">
+            <div class="icon">❌</div>
+            <h2 style="color: var(--danger-color);">LinkedIn Authorization Failed</h2>
+            <p class="subtitle" style="margin: 16px 0;">{{ERROR_MESSAGE}}</p>
+            <a href="/linkedin/login" class="btn">Try Again</a>
+            <a href="/" class="btn btn-secondary" style="margin-left: 8px;">Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>
