@@ -168,7 +168,17 @@ async def linkedin_callback(
 
     if "access_token" not in token_data:
         err_msg = token_data.get("error_description") or token_data.get("error") or response.text
-        logger.error(f"token exchange failed: {err_msg}")
+        logger.warning(f"token exchange issue: {err_msg}")
+
+        # if token already exists in database from a concurrent or previous request, redirect to dashboard
+        existing_record = get_linkedin_token_record()
+        if existing_record and existing_record.get("access_token"):
+            return RedirectResponse(url="/")
+
+        if error_template.exists():
+            html_content = error_template.read_text(encoding="utf-8").replace("{{ERROR_MESSAGE}}", err_msg)
+            return HTMLResponse(status_code=status.HTTP_400_BAD_REQUEST, content=html_content)
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"LinkedIn token exchange failed: {err_msg}",

@@ -1,7 +1,7 @@
 import logging
 import requests
 from config.constants import PostStatus
-from config.settings import SLACK_WEBHOOK_URL
+from config.settings import SLACK_WEBHOOK_URL, get_linkedin_access_token, get_linkedin_person_urn
 from data.post_storage import get_post_by_id, update_post_status
 from services.linkedin_service import publish_post_to_linkedin
 
@@ -204,8 +204,19 @@ def execute_post_decision(post_id: str) -> dict:
     # handle approved status by publishing to linkedin
     if current_status == PostStatus.APPROVED:
         content = post_record.get("content", "")
-        token = post_record.get("access_token")
-        profile_id = post_record.get("profile_id")
+        token = post_record.get("access_token") or get_linkedin_access_token()
+        profile_id = post_record.get("profile_id") or get_linkedin_person_urn()
+
+        if not token:
+            logger.error(f"Cannot publish post '{post_id}': No LinkedIn access token available.")
+            if response_url:
+                update_slack_message(
+                    response_url=response_url,
+                    post_id=post_id,
+                    action_type="approved",
+                    detail_message="Failed: LinkedIn is not connected. Please connect LinkedIn via the web dashboard.",
+                )
+            return {"success": False, "error": "No LinkedIn access token available."}
 
         publish_result = publish_post_to_linkedin(
             content=content,
