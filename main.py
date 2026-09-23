@@ -93,8 +93,9 @@ def linkedin_login() -> RedirectResponse:
     auth_url = f"https://www.linkedin.com/oauth/v2/authorization?{urllib.parse.urlencode(params)}"
     return RedirectResponse(url=auth_url)
 
-# linkedin oauth callback endpoint
+# linkedin oauth callback endpoint (supports both /linkedin/callback and legacy /callback)
 @app.get("/linkedin/callback", response_class=HTMLResponse)
+@app.get("/callback", response_class=HTMLResponse)
 async def linkedin_callback(
     code: str | None = Query(default=None),
     state: str | None = Query(default=None),
