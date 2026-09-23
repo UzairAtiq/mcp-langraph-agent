@@ -23,6 +23,14 @@ services:
       - key: LINKEDIN_REDIRECT_URI
         sync: false
       - key: DATABASE_URL
+        fromDatabase:
+          name: linkedin-slack-db
+          property: connectionString
+      - key: LINKEDIN_ACCESS_TOKEN
+        sync: false
+      - key: LINKEDIN_PERSON_URN
+        sync: false
+      - key: LINKEDIN_PROFILE_ID
         sync: false
       - key: LANGFUSE_SECRET_KEY
         sync: false
@@ -30,3 +38,9 @@ services:
         sync: false
       - key: LANGFUSE_BASE_URL
         value: https://cloud.langfuse.com
+
+databases:
+  - name: linkedin-slack-db
+    databaseName: linkedin_agent
+    user: agent_user
+    plan: free
