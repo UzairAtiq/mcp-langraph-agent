@@ -1,87 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkedIn Agent Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedIn Agent — Dashboard</title>
+  <meta name="description" content="Monitor LinkedIn OAuth status, generate posts, and track Slack approvals." />
+
+  <!-- fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- gsap -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>LinkedIn Agent & Slack Interactivity Hub</h1>
-            <p class="subtitle">Unified service for LLM content generation, human-in-the-loop Slack approvals, and LinkedIn publishing.</p>
-        </header>
+  <div class="page-wrap">
 
-        <div class="grid-2">
-            <!-- System & Token Status Card -->
-            <div class="card">
-                <div class="card-title">
-                    <span>OAuth & Storage Status</span>
-                    <span id="auth-badge" class="badge">Checking...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">LinkedIn Person URN:</span>
-                    <span id="person-urn" class="info-value">Loading...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Token Expiration:</span>
-                    <span id="token-expiry" class="info-value">Loading...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Database Backend:</span>
-                    <span id="db-type" class="info-value">Loading...</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Redirect URI:</span>
-                    <span id="redirect-uri" class="info-value" style="font-size: 11px; word-break: break-all;">Loading...</span>
-                </div>
+    <!-- header -->
+    <header class="site-header" id="site-header">
+      <p class="site-header__eyebrow">LinkedIn Agent</p>
+      <h1>Automation Dashboard</h1>
+      <p class="site-header__sub">
+        LLM content generation, human-in-the-loop Slack approvals, and LinkedIn publishing — in one place.
+      </p>
+    </header>
 
-                <div class="btn-group">
-                    <a href="/linkedin/login" class="btn">Connect LinkedIn</a>
-                    <a href="/docs" class="btn btn-secondary" target="_blank">Swagger Docs</a>
-                </div>
-            </div>
+    <!-- top two-column row -->
+    <div class="grid-2">
 
-            <!-- Test Post Trigger Card -->
-            <div class="card">
-                <div class="card-title">
-                    <span>Generate Test Post</span>
-                </div>
-                <form id="generate-form">
-                    <div class="form-group">
-                        <label for="topic-input">Post Topic</label>
-                        <input type="text" id="topic-input" placeholder="e.g. AI advancements and modern software engineering" required>
-                    </div>
-                    <button type="submit" id="generate-btn" class="btn">Generate & Send to Slack</button>
-                    <div id="generate-result" style="margin-top: 10px; font-size: 13px;"></div>
-                </form>
-            </div>
+      <!-- ── OAuth & status card ── -->
+      <div class="card" id="card-status">
+        <div class="card__header">
+          <span class="card__title">LinkedIn Connection</span>
+          <span id="linkedin-badge" class="badge badge--dim">
+            <span class="badge__dot badge__dot--pulse"></span>
+            Checking
+          </span>
         </div>
 
-        <!-- Recent Posts Card -->
-        <div class="card">
-            <div class="card-title">
-                <span>Recent Posts</span>
-                <button onclick="loadPosts()" class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;">Refresh</button>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 140px;">Post ID</th>
-                        <th>Content</th>
-                        <th style="width: 110px;">Status</th>
-                        <th style="width: 170px;">Created At</th>
-                    </tr>
-                </thead>
-                <tbody id="posts-tbody"></tbody>
-            </table>
-            <div id="empty-posts" class="empty-state" style="display: none;">
-                No posts recorded yet. Click "Generate & Send to Slack" above to create your first post!
-            </div>
-        </div>
-    </div>
+        <div class="info-grid" id="status-info">
+          <!-- skeleton while loading -->
+          <div class="skeleton-row" id="sk-urn">
+            <div class="skeleton" style="width:80px"></div>
+            <div class="skeleton" style="width:160px"></div>
+          </div>
+          <div class="skeleton-row" id="sk-exp">
+            <div class="skeleton" style="width:100px"></div>
+            <div class="skeleton" style="width:130px"></div>
+          </div>
+          <div class="skeleton-row" id="sk-db">
+            <div class="skeleton" style="width:110px"></div>
+            <div class="skeleton" style="width:90px"></div>
+          </div>
+          <div class="skeleton-row" id="sk-uri">
+            <div class="skeleton" style="width:75px"></div>
+            <div class="skeleton" style="width:200px"></div>
+          </div>
 
-    <script src="/static/app.js"></script>
+          <!-- real rows (hidden until data loads) -->
+          <div class="info-row" id="row-urn" style="display:none">
+            <span class="info-label">Person URN</span>
+            <span class="info-value" id="val-urn">—</span>
+          </div>
+          <div class="info-row" id="row-exp" style="display:none">
+            <span class="info-label">Token Expiry</span>
+            <span class="info-value" id="val-exp">—</span>
+          </div>
+          <div class="info-row" id="row-db" style="display:none">
+            <span class="info-label">Database</span>
+            <span class="info-value" id="val-db">—</span>
+          </div>
+          <div class="info-row" id="row-uri" style="display:none">
+            <span class="info-label">Redirect URI</span>
+            <span class="info-value" id="val-uri">—</span>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <a id="btn-connect" href="/linkedin/login" class="btn btn--primary" aria-label="Connect LinkedIn account">
+            <i data-lucide="link-2" style="width:14px;height:14px"></i>
+            Connect LinkedIn
+          </a>
+          <a href="/docs" target="_blank" rel="noopener" class="btn btn--ghost" aria-label="Open Swagger API docs">
+            <i data-lucide="code-2" style="width:14px;height:14px"></i>
+            API Docs
+          </a>
+        </div>
+      </div>
+
+      <!-- ── Generate post card ── -->
+      <div class="card" id="card-generate">
+        <div class="card__header">
+          <span class="card__title">Generate Post</span>
+        </div>
+
+        <form id="generate-form" novalidate>
+          <div class="form-field">
+            <label class="form-label" for="topic-input">Post Topic</label>
+            <input
+              type="text"
+              id="topic-input"
+              class="form-input"
+              placeholder="AI advancements and modern software engineering"
+              autocomplete="off"
+            />
+          </div>
+          <button type="submit" id="generate-btn" class="btn btn--primary" aria-label="Generate post and send to Slack">
+            <i data-lucide="send" style="width:14px;height:14px"></i>
+            Generate &amp; Send to Slack
+          </button>
+        </form>
+
+        <div id="generate-result" class="result-msg" role="alert" aria-live="polite"></div>
+      </div>
+
+    </div><!-- /grid-2 -->
+
+    <!-- ── Posts storage card ── -->
+    <div class="card" id="card-posts">
+      <div class="card__header">
+        <span class="card__title">Saved Posts</span>
+        <button id="refresh-btn" class="btn btn--ghost" onclick="loadPosts()" style="padding:5px 10px;font-size:12px" aria-label="Refresh posts list">
+          <i data-lucide="refresh-cw" style="width:12px;height:12px"></i>
+          Refresh
+        </button>
+      </div>
+
+      <!-- skeleton table -->
+      <div id="posts-skeleton">
+        <div class="skeleton-row"><div class="skeleton" style="width:100%"></div></div>
+        <div class="skeleton-row"><div class="skeleton" style="width:94%"></div></div>
+        <div class="skeleton-row"><div class="skeleton" style="width:88%"></div></div>
+      </div>
+
+      <!-- real table -->
+      <div id="posts-table-wrap" class="table-wrap" style="display:none">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:130px">Post ID</th>
+              <th>Content</th>
+              <th style="width:120px">Status</th>
+              <th style="width:160px">Created</th>
+            </tr>
+          </thead>
+          <tbody id="posts-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- empty state -->
+      <div id="posts-empty" class="empty-state" style="display:none">
+        <div class="empty-state__icon">
+          <i data-lucide="inbox" style="width:32px;height:32px"></i>
+        </div>
+        <p class="empty-state__title">No posts yet</p>
+        <p class="empty-state__body">Generate a post above and approve it in Slack to see it here.</p>
+      </div>
+
+    </div><!-- /card-posts -->
+
+  </div><!-- /page-wrap -->
+
+  <script src="/static/app.js"></script>
 </body>
 </html>

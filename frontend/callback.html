@@ -1,59 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkedIn Authentication Successful</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        .callback-container {
-            max-width: 520px;
-            margin: 60px auto;
-            text-align: center;
-        }
-        .icon {
-            font-size: 40px;
-            margin-bottom: 12px;
-        }
-        .details-box {
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 16px;
-            text-align: left;
-            margin: 20px 0;
-            font-size: 13px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedIn Connected — LinkedIn Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    .center-wrap {
+      max-width: 520px;
+      margin: var(--s7) auto 0;
+    }
+    .success-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--ok-bg);
+      border: 1px solid var(--ok-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--s4);
+      color: var(--ok);
+    }
+    .page-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: var(--s2);
+    }
+    .page-sub {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: var(--s5);
+    }
+    .btn-row {
+      display: flex;
+      justify-content: center;
+      margin-top: var(--s5);
+    }
+  </style>
 </head>
 <body>
-    <div class="container callback-container">
-        <div class="card">
-            <div class="icon">✅</div>
-            <h2>LinkedIn Connected Successfully</h2>
-            <p class="subtitle">OAuth tokens have been saved to your persistent database with automatic background token refresh enabled.</p>
-            
-            <div class="details-box">
-                <div class="info-row">
-                    <span class="info-label">User:</span>
-                    <span class="info-value">{{USER_NAME}}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Person URN:</span>
-                    <span class="info-value">{{PERSON_URN}}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Expires In:</span>
-                    <span class="info-value">{{EXPIRES_IN}} seconds</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Refresh Token:</span>
-                    <span class="info-value">{{REFRESH_STATUS}}</span>
-                </div>
-            </div>
-
-            <a href="/" class="btn">Return to Dashboard</a>
+  <div class="page-wrap">
+    <div class="center-wrap" id="cb-card" style="opacity:0">
+      <div class="card">
+        <div class="success-icon">
+          <i data-lucide="check" style="width:22px;height:22px"></i>
         </div>
+        <h1 class="page-title">LinkedIn Connected</h1>
+        <p class="page-sub">OAuth tokens saved. Background token refresh is enabled.</p>
+
+        <div class="info-grid">
+          <div class="info-row">
+            <span class="info-label">User</span>
+            <span class="info-value">{{USER_NAME}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Person URN</span>
+            <span class="info-value">{{PERSON_URN}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Expires In</span>
+            <span class="info-value">{{EXPIRES_IN}} s</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Refresh Token</span>
+            <span class="info-value">{{REFRESH_STATUS}}</span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <a href="/" class="btn btn--primary">
+            <i data-lucide="arrow-left" style="width:14px;height:14px"></i>
+            Back to Dashboard
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    gsap.to("#cb-card", { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", from: { y: 12 } });
+  </script>
 </body>
 </html>

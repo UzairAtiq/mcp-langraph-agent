@@ -1,31 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkedIn Authorization Failed</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <style>
-        .error-container {
-            max-width: 500px;
-            margin: 60px auto;
-            text-align: center;
-        }
-        .icon {
-            font-size: 40px;
-            margin-bottom: 12px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Authorization Failed — LinkedIn Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    .center-wrap {
+      max-width: 500px;
+      margin: var(--s7) auto 0;
+    }
+    .error-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--err-bg);
+      border: 1px solid var(--err-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--s4);
+      color: var(--err);
+    }
+    .page-title {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: var(--s2);
+    }
+    .error-msg {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: var(--s5);
+      line-height: 1.6;
+    }
+    .btn-row {
+      display: flex;
+      justify-content: center;
+      gap: var(--s2);
+    }
+  </style>
 </head>
 <body>
-    <div class="container error-container">
-        <div class="card">
-            <div class="icon">❌</div>
-            <h2 style="color: var(--danger-color);">LinkedIn Authorization Failed</h2>
-            <p class="subtitle" style="margin: 16px 0;">{{ERROR_MESSAGE}}</p>
-            <a href="/linkedin/login" class="btn">Try Again</a>
-            <a href="/" class="btn btn-secondary" style="margin-left: 8px;">Back to Dashboard</a>
+  <div class="page-wrap">
+    <div class="center-wrap" id="err-card" style="opacity:0">
+      <div class="card">
+        <div class="error-icon">
+          <i data-lucide="x" style="width:22px;height:22px"></i>
         </div>
+        <h1 class="page-title">Authorization Failed</h1>
+        <p class="error-msg">{{ERROR_MESSAGE}}</p>
+
+        <div class="btn-row">
+          <a href="/linkedin/login" class="btn btn--primary">
+            <i data-lucide="refresh-cw" style="width:14px;height:14px"></i>
+            Try Again
+          </a>
+          <a href="/" class="btn btn--ghost">
+            <i data-lucide="arrow-left" style="width:14px;height:14px"></i>
+            Dashboard
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    gsap.to("#err-card", { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", from: { y: 12 } });
+  </script>
 </body>
 </html>
