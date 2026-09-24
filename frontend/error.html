@@ -50,7 +50,7 @@
 </head>
 <body>
   <div class="page-wrap">
-    <div class="center-wrap" id="err-card" style="opacity:0">
+    <div class="center-wrap" id="err-card">
       <div class="card">
         <div class="error-icon">
           <i data-lucide="x" style="width:22px;height:22px"></i>
@@ -73,8 +73,12 @@
   </div>
 
   <script>
-    lucide.createIcons();
-    gsap.to("#err-card", { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", from: { y: 12 } });
+    if (window.lucide && typeof lucide.createIcons === "function") lucide.createIcons();
+    if (typeof gsap !== "undefined") {
+      try {
+        gsap.from("#err-card", { opacity: 0, y: 12, duration: 0.4, ease: "power2.out" });
+      } catch (e) {}
+    }
   </script>
 </body>
 </html>

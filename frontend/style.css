@@ -93,7 +93,6 @@ body {
   padding-bottom: var(--s5);
   border-bottom: 1px solid var(--border);
   margin-bottom: var(--s5);
-  opacity: 0;
 }
 
 .site-header__eyebrow {
@@ -126,7 +125,6 @@ body {
   border-radius: var(--r-lg);
   padding: var(--s5);
   margin-bottom: var(--s4);
-  opacity: 0;
   transition: border-color 0.2s ease;
 }
 

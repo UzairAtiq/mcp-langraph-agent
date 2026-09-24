@@ -16,6 +16,7 @@ const BADGE_STATES = {
 };
 
 function applyBadge(el, state) {
+  if (!el) return;
   const cfg = BADGE_STATES[state] || BADGE_STATES.checking;
   el.className = `badge ${cfg.cls}`;
   el.innerHTML = cfg.dot
@@ -38,10 +39,21 @@ function postBadgeCls(s) {
   return map[s.toLowerCase()] || "badge--dim";
 }
 
-// ── DOM shortcuts ─────────────────────────────────────────
+// ── DOM shortcuts & safe setters ─────────────────────────
 const $ = (id) => document.getElementById(id);
 
-// ── skeletons ──────────────────────────────────────────────
+function setText(id, text) {
+  const el = $(id);
+  if (el) el.textContent = text;
+}
+
+function safeCreateIcons() {
+  if (window.lucide && typeof lucide.createIcons === "function") {
+    lucide.createIcons();
+  }
+}
+
+// ── skeletons & rows ──────────────────────────────────────
 function showSkeletons(...ids) { ids.forEach(id => { const el = $(id); if (el) el.style.display = ""; }); }
 function hideSkeletons(...ids) { ids.forEach(id => { const el = $(id); if (el) el.style.display = "none"; }); }
 function showRows(...ids)      { ids.forEach(id => { const el = $(id); if (el) el.style.display = "flex"; }); }
@@ -70,8 +82,8 @@ function fmt(dateStr) {
 
 // ── LinkedIn status ───────────────────────────────────────
 async function loadStatus() {
-  const badge   = $("linkedin-badge");
-  applyBadge(badge, "checking");
+  const badge = $("linkedin-badge") || $("auth-badge");
+  if (badge) applyBadge(badge, "checking");
 
   try {
     const [healthRes, tokenRes] = await Promise.all([
@@ -89,41 +101,59 @@ async function loadStatus() {
     showRows("row-urn", "row-exp", "row-db", "row-uri");
 
     if (token.authenticated) {
-      applyBadge(badge, "ok");
-      $("val-urn").textContent = token.person_urn  || "Available";
-      $("val-exp").textContent = fmt(token.expires_at);
+      if (badge) applyBadge(badge, "ok");
+      const urnText = token.person_urn || "Available";
+      const expText = fmt(token.expires_at);
+      setText("val-urn", urnText);
+      setText("person-urn", urnText);
+      setText("val-exp", expText);
+      setText("token-expiry", expText);
     } else {
-      applyBadge(badge, "error");
-      $("val-urn").textContent = "Not authenticated";
-      $("val-exp").textContent = "—";
+      if (badge) applyBadge(badge, "error");
+      setText("val-urn", "Not authenticated");
+      setText("person-urn", "Not authenticated");
+      setText("val-exp", "—");
+      setText("token-expiry", "—");
     }
 
-    $("val-db").textContent  = health.database === "postgresql" ? "PostgreSQL" : "SQLite";
-    $("val-uri").textContent = token.redirect_uri || `${window.location.origin}/linkedin/callback`;
+    const dbText = health.database === "postgresql" ? "PostgreSQL" : "SQLite";
+    const uriText = token.redirect_uri || `${window.location.origin}/linkedin/callback`;
+    setText("val-db", dbText);
+    setText("db-type", dbText);
+    setText("val-uri", uriText);
+    setText("redirect-uri", uriText);
 
-    // animate rows in
-    gsap.from(["#row-urn", "#row-exp", "#row-db", "#row-uri"], {
-      opacity: 0, y: 4, stagger: 0.06, duration: 0.3, ease: "power1.out",
-    });
+    // animate rows in if GSAP is loaded
+    if (typeof gsap !== "undefined") {
+      try {
+        gsap.from(["#row-urn", "#row-exp", "#row-db", "#row-uri"], {
+          opacity: 0, y: 4, stagger: 0.06, duration: 0.3, ease: "power1.out",
+        });
+      } catch { /* optional animation */ }
+    }
 
   } catch (err) {
     console.error("loadStatus failed:", err);
-    applyBadge(badge, "error");
+    if (badge) applyBadge(badge, "error");
     hideSkeletons("sk-urn", "sk-exp", "sk-db", "sk-uri");
     showRows("row-urn", "row-exp", "row-db", "row-uri");
-    $("val-urn").textContent = "Error — could not fetch status";
-    $("val-exp").textContent = "—";
-    $("val-db").textContent  = "—";
-    $("val-uri").textContent = "—";
+    setText("val-urn", "Error fetching status");
+    setText("person-urn", "Error fetching status");
+    setText("val-exp", "—");
+    setText("token-expiry", "—");
+    setText("val-db", "—");
+    setText("db-type", "—");
+    setText("val-uri", "—");
+    setText("redirect-uri", "—");
   }
 }
 
 // ── posts list ────────────────────────────────────────────
 async function loadPosts() {
-  const skeleton = $("posts-skeleton");
+  const skeleton  = $("posts-skeleton");
   const tableWrap = $("posts-table-wrap");
-  const emptyEl  = $("posts-empty");
-  const tbody    = $("posts-tbody");
+  const emptyEl   = $("posts-empty") || $("empty-posts");
+  const tbody     = $("posts-tbody");
 
   // show skeleton, hide table/empty
   if (skeleton)  skeleton.style.display  = "";
@@ -141,66 +171,68 @@ async function loadPosts() {
     if (posts.length === 0) {
       if (emptyEl) {
         emptyEl.style.display = "";
-        lucide.createIcons();
+        safeCreateIcons();
       }
       return;
     }
 
-    // build rows
-    tbody.innerHTML = posts.map((post, i) => {
-      const content  = post.content || "";
-      const badgeCls = postBadgeCls(post.status);
-      const rowId    = `post-row-${i}`;
-      return `
-        <tr id="${rowId}" style="opacity:0">
-          <td class="post-id-cell">${esc(post.post_id)}</td>
-          <td class="post-content-cell">
-            <div class="post-excerpt" onclick="toggleContent(${i})" title="Click to expand">${esc(content)}</div>
-            <pre id="post-full-${i}" class="post-full">${esc(content)}</pre>
-            <button class="post-toggle-btn" id="toggle-btn-${i}" onclick="toggleContent(${i})">Show full text</button>
-          </td>
-          <td>
-            <span class="badge ${badgeCls}" id="post-badge-${post.post_id}">${esc(post.status || "—")}</span>
-          </td>
-          <td style="white-space:nowrap;color:var(--text-secondary);font-size:12px">${fmt(post.created_at)}</td>
-        </tr>`;
-    }).join("");
+    if (tbody) {
+      tbody.innerHTML = posts.map((post, i) => {
+        const content  = post.content || "";
+        const badgeCls = postBadgeCls(post.status);
+        const rowId    = `post-row-${i}`;
+        return `
+          <tr id="${rowId}">
+            <td class="post-id-cell">${esc(post.post_id)}</td>
+            <td class="post-content-cell">
+              <div class="post-excerpt" onclick="toggleContent(${i})" title="Click to expand">${esc(content)}</div>
+              <pre id="post-full-${i}" class="post-full">${esc(content)}</pre>
+              <button class="post-toggle-btn" id="toggle-btn-${i}" onclick="toggleContent(${i})">Show full text</button>
+            </td>
+            <td>
+              <span class="badge ${badgeCls}" id="post-badge-${post.post_id}">${esc(post.status || "—")}</span>
+            </td>
+            <td style="white-space:nowrap;color:var(--text-secondary);font-size:12px">${fmt(post.created_at)}</td>
+          </tr>`;
+      }).join("");
+    }
 
     if (tableWrap) tableWrap.style.display = "";
 
-    // stagger-animate rows in
-    const rows = posts.map((_, i) => `#post-row-${i}`);
-    gsap.to(rows, {
-      opacity: 1, y: 0,
-      stagger: 0.04, duration: 0.25, ease: "power1.out",
-      onStart() {
-        rows.forEach(id => {
-          const el = document.querySelector(id);
-          if (el) { el.style.opacity = "0"; el.style.transform = "translateY(6px)"; }
+    // stagger-animate rows in if GSAP is loaded
+    if (typeof gsap !== "undefined") {
+      try {
+        const rows = posts.map((_, i) => `#post-row-${i}`);
+        gsap.from(rows, {
+          opacity: 0, y: 6,
+          stagger: 0.04, duration: 0.25, ease: "power1.out",
         });
-      },
-    });
+      } catch { /* optional animation */ }
+    }
 
-    lucide.createIcons();
+    safeCreateIcons();
 
   } catch (err) {
     console.error("loadPosts failed:", err);
     if (skeleton) skeleton.style.display = "none";
-    if (emptyEl)  { emptyEl.style.display = ""; lucide.createIcons(); }
+    if (emptyEl)  { emptyEl.style.display = ""; safeCreateIcons(); }
   }
 }
 
 // ── expand/collapse post text ─────────────────────────────
 function toggleContent(idx) {
-  const full   = $(`post-full-${idx}`);
-  const btn    = $(`toggle-btn-${idx}`);
-  const open   = full.style.display === "block";
+  const full = $(`post-full-${idx}`);
+  const btn  = $(`toggle-btn-${idx}`);
+  if (!full || !btn) return;
 
+  const open = full.style.display === "block";
   full.style.display = open ? "none" : "block";
   btn.textContent    = open ? "Show full text" : "Collapse";
 
-  if (!open) {
-    gsap.from(full, { opacity: 0, y: -4, duration: 0.2, ease: "power1.out" });
+  if (!open && typeof gsap !== "undefined") {
+    try {
+      gsap.from(full, { opacity: 0, y: -4, duration: 0.2, ease: "power1.out" });
+    } catch { /* optional */ }
   }
 }
 
@@ -208,56 +240,65 @@ function toggleContent(idx) {
 async function handleGenerate(event) {
   event.preventDefault();
 
-  const topicInput  = $("topic-input");
-  const submitBtn   = $("generate-btn");
-  const resultEl    = $("generate-result");
+  const topicInput = $("topic-input");
+  const submitBtn  = $("generate-btn");
+  const resultEl   = $("generate-result");
 
-  const topic = topicInput.value.trim() || "AI advancements and modern software engineering";
+  if (!submitBtn) return;
+
+  const topic = (topicInput && topicInput.value.trim()) || "AI advancements and modern software engineering";
 
   // loading state
   submitBtn.disabled = true;
   const originalHTML = submitBtn.innerHTML;
   submitBtn.innerHTML = `<i data-lucide="loader-2" style="width:14px;height:14px"></i> Generating...`;
-  lucide.createIcons();
+  safeCreateIcons();
 
-  resultEl.className = "result-msg";
-  resultEl.textContent = "";
+  if (resultEl) {
+    resultEl.className = "result-msg";
+    resultEl.textContent = "";
+  }
 
   // spin icon
   const loaderEl = submitBtn.querySelector("[data-lucide='loader-2']");
   let spinTl;
-  if (loaderEl) {
-    spinTl = gsap.to(loaderEl, { rotation: 360, duration: 0.9, ease: "none", repeat: -1 });
+  if (loaderEl && typeof gsap !== "undefined") {
+    try {
+      spinTl = gsap.to(loaderEl, { rotation: 360, duration: 0.9, ease: "none", repeat: -1 });
+    } catch { /* optional */ }
   }
 
   try {
     const res  = await fetch(`/posts/generate?topic=${encodeURIComponent(topic)}`, { method: "POST" });
     const data = await res.json();
 
-    if (res.ok) {
-      resultEl.className   = "result-msg result-msg--ok";
-      resultEl.textContent = `Post ${data.post_id} generated and sent to Slack for approval.`;
-      gsap.from(resultEl, { opacity: 0, y: 4, duration: 0.2 });
-      loadPosts();
-    } else {
-      resultEl.className   = "result-msg result-msg--err";
-      resultEl.textContent = data.detail || "Failed to generate post.";
-      gsap.from(resultEl, { opacity: 0, y: 4, duration: 0.2 });
+    if (resultEl) {
+      if (res.ok) {
+        resultEl.className   = "result-msg result-msg--ok";
+        resultEl.textContent = `Post ${data.post_id} generated and sent to Slack for approval.`;
+        if (typeof gsap !== "undefined") gsap.from(resultEl, { opacity: 0, y: 4, duration: 0.2 });
+        loadPosts();
+      } else {
+        resultEl.className   = "result-msg result-msg--err";
+        resultEl.textContent = data.detail || "Failed to generate post.";
+        if (typeof gsap !== "undefined") gsap.from(resultEl, { opacity: 0, y: 4, duration: 0.2 });
+      }
     }
   } catch (err) {
-    resultEl.className   = "result-msg result-msg--err";
-    resultEl.textContent = `Network error: ${err.message}`;
-    gsap.from(resultEl, { opacity: 0, y: 4, duration: 0.2 });
+    if (resultEl) {
+      resultEl.className   = "result-msg result-msg--err";
+      resultEl.textContent = `Network error: ${err.message}`;
+      if (typeof gsap !== "undefined") gsap.from(resultEl, { opacity: 0, y: 4, duration: 0.2 });
+    }
   } finally {
     if (spinTl) spinTl.kill();
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalHTML;
-    lucide.createIcons();
+    safeCreateIcons();
   }
 }
 
 // ── live post status polling ──────────────────────────────
-// Polls /posts and updates individual badges without re-rendering the table
 async function pollPostStatuses() {
   try {
     const res  = await fetch("/posts");
@@ -271,14 +312,19 @@ async function pollPostStatuses() {
       const newText = post.status || "—";
 
       if (badgeEl.textContent.trim() !== newText) {
-        gsap.to(badgeEl, {
-          opacity: 0, duration: 0.15,
-          onComplete() {
-            badgeEl.className   = `badge ${newCls}`;
-            badgeEl.textContent = newText;
-            gsap.to(badgeEl, { opacity: 1, duration: 0.15 });
-          },
-        });
+        if (typeof gsap !== "undefined") {
+          gsap.to(badgeEl, {
+            opacity: 0, duration: 0.15,
+            onComplete() {
+              badgeEl.className   = `badge ${newCls}`;
+              badgeEl.textContent = newText;
+              gsap.to(badgeEl, { opacity: 1, duration: 0.15 });
+            },
+          });
+        } else {
+          badgeEl.className   = `badge ${newCls}`;
+          badgeEl.textContent = newText;
+        }
       }
     });
   } catch { /* silent — polling is best-effort */ }
@@ -286,24 +332,21 @@ async function pollPostStatuses() {
 
 // ── page load animations ──────────────────────────────────
 function runEntryAnimations() {
-  const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
-
-  tl.to("#site-header",   { opacity: 1, y: 0, duration: 0.45, from: { y: -12 } })
-    .to("#card-status",   { opacity: 1, y: 0, duration: 0.35, from: { y: 10 } }, "-=0.2")
-    .to("#card-generate", { opacity: 1, y: 0, duration: 0.35, from: { y: 10 } }, "-=0.25")
-    .to("#card-posts",    { opacity: 1, y: 0, duration: 0.35, from: { y: 10 } }, "-=0.2");
-
-  // set starting positions
-  gsap.set("#site-header",   { opacity: 0, y: -12 });
-  gsap.set("#card-status",   { opacity: 0, y: 10 });
-  gsap.set("#card-generate", { opacity: 0, y: 10 });
-  gsap.set("#card-posts",    { opacity: 0, y: 10 });
+  if (typeof gsap === "undefined") return;
+  try {
+    gsap.from("#site-header",   { opacity: 0, y: -10, duration: 0.4, ease: "power2.out" });
+    gsap.from("#card-status",   { opacity: 0, y: 10,  duration: 0.35, delay: 0.08, ease: "power2.out" });
+    gsap.from("#card-generate", { opacity: 0, y: 10,  duration: 0.35, delay: 0.14, ease: "power2.out" });
+    gsap.from("#card-posts",    { opacity: 0, y: 10,  duration: 0.35, delay: 0.2,  ease: "power2.out" });
+  } catch (err) {
+    console.warn("Entry animations skipped:", err);
+  }
 }
 
 // ── init ──────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   // render icons first
-  lucide.createIcons();
+  safeCreateIcons();
 
   // entry animations
   runEntryAnimations();
@@ -319,4 +362,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // polling loops
   setInterval(loadStatus,        STATUS_POLL_MS);
   setInterval(loadPosts,         POSTS_POLL_MS);
+  setInterval(pollPostStatuses,  POSTS_POLL_MS);
 });
+

@@ -59,7 +59,14 @@ if FRONTEND_DIR.exists():
 async def root_dashboard() -> HTMLResponse:
     index_file = FRONTEND_DIR / "index.html"
     if index_file.exists():
-        return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
+        return HTMLResponse(
+            content=index_file.read_text(encoding="utf-8"),
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            },
+        )
     return HTMLResponse(content="<h2>LinkedIn Agent API Running</h2><a href='/docs'>Swagger Docs</a>")
 
 # health check endpoint for cloud hosts
