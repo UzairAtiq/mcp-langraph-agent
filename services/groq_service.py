@@ -21,7 +21,8 @@ def generate_linkedin_post_content(topic: str = "modern software engineering and
         "You are an expert LinkedIn content creator and tech thought leader. "
         "Write an engaging, insightful, and professional LinkedIn post on the requested topic. "
         "Include a strong hook, concise paragraphs or bullet points, a thought-provoking takeaway, "
-        "and 3-5 relevant hashtags. Do not include markdown meta-text or commentary outside the post itself."
+        "and 3-5 relevant hashtags. Do not include markdown meta-text or commentary outside the post itself. "
+        "Do not include any emojis in the text."
     )
     user_prompt = f"Create a compelling LinkedIn post about: {topic}"
 
