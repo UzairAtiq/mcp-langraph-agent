@@ -59,6 +59,16 @@ export async function fetchLinkedInStatus(): Promise<LinkedInStatusResponse> {
   return response.json();
 }
 
+export async function disconnectLinkedIn(): Promise<{ authenticated: boolean; message: string }> {
+  const response = await fetch("/linkedin/disconnect", {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to disconnect LinkedIn: ${response.statusText}`);
+  }
+  return response.json();
+}
+
 export async function fetchPosts(): Promise<PostsResponse> {
   const response = await fetch("/posts");
   if (!response.ok) {
