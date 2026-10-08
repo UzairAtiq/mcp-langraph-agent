@@ -198,7 +198,7 @@ def get_linkedin_token_record(token_id: str = "default") -> dict[str, Any] | Non
 
     # check environment variable fallback
     env_token = os.getenv("LINKEDIN_ACCESS_TOKEN")
-    if env_token and env_token.strip() and env_token.strip().lower() not in ("none", "null", "dummy", "test", "your_token_here"):
+    if env_token:
         return {
             "id": token_id,
             "access_token": env_token.strip(),
@@ -214,7 +214,7 @@ def get_linkedin_token_record(token_id: str = "default") -> dict[str, Any] | Non
     token_file = BASE_DIR / ".linkedin_token"
     if token_file.exists():
         file_token = token_file.read_text(encoding="utf-8").strip()
-        if file_token and file_token.lower() not in ("none", "null", "dummy", "test", "your_token_here"):
+        if file_token:
             return {
                 "id": token_id,
                 "access_token": file_token,
@@ -294,14 +294,11 @@ def get_valid_linkedin_access_token(token_id: str = "default") -> str | None:
         return None
 
     access_token = record.get("access_token")
-    if not access_token or not access_token.strip():
-        return None
-
     expires_at = record.get("expires_at")
     refresh_token = record.get("refresh_token")
 
     # verify expiration window
-    if expires_at and expires_at not in ("None", "null", ""):
+    if expires_at and refresh_token:
         try:
             if isinstance(expires_at, str):
                 exp_dt = datetime.fromisoformat(expires_at)
@@ -311,60 +308,16 @@ def get_valid_linkedin_access_token(token_id: str = "default") -> str | None:
             if exp_dt.tzinfo is None:
                 exp_dt = exp_dt.replace(tzinfo=timezone.utc)
 
-            now_utc = datetime.now(timezone.utc)
-
             # auto-refresh if token expires in less than 24 hours
-            if now_utc + timedelta(hours=24) >= exp_dt:
-                if refresh_token:
-                    logger.info("LinkedIn token nearing expiration or expired. Triggering auto-refresh...")
-                    refresh_res = refresh_linkedin_access_token(token_id=token_id)
-                    if refresh_res.get("success"):
-                        return refresh_res.get("token")
-
-                # if token is past expiration and could not be refreshed, it is invalid
-                if now_utc >= exp_dt:
-                    logger.warning("LinkedIn token is expired and no valid refresh token is available.")
-                    return None
+            if datetime.now(timezone.utc) + timedelta(hours=24) >= exp_dt:
+                logger.info("LinkedIn token nearing expiration or expired. Triggering auto-refresh...")
+                refresh_res = refresh_linkedin_access_token(token_id=token_id)
+                if refresh_res.get("success"):
+                    return refresh_res.get("token")
         except Exception as err:
             logger.warning(f"error checking token expiration date: {err}")
 
     return access_token
-
-# delete stored token record from persistent storage
-def delete_linkedin_token(token_id: str = "default") -> bool:
-    init_token_db()
-    deleted = False
-
-    conn = get_postgres_connection()
-    if conn:
-        try:
-            with conn:
-                with conn.cursor() as cur:
-                    cur.execute("DELETE FROM linkedin_tokens WHERE id = %s;", (token_id,))
-                    if cur.rowcount > 0:
-                        deleted = True
-        except Exception as err:
-            logger.warning(f"failed to delete token from postgres: {err}")
-
-    try:
-        with get_sqlite_connection() as sqlite_conn:
-            cur = sqlite_conn.cursor()
-            cur.execute("DELETE FROM linkedin_tokens WHERE id = ?;", (token_id,))
-            if cur.rowcount > 0:
-                deleted = True
-            sqlite_conn.commit()
-    except Exception as err:
-        logger.warning(f"failed to delete token from sqlite: {err}")
-
-    token_file = BASE_DIR / ".linkedin_token"
-    if token_file.exists():
-        try:
-            token_file.unlink()
-            deleted = True
-        except OSError:
-            pass
-
-    return deleted
 
 # retrieve stored person urn
 def get_stored_person_urn(token_id: str = "default") -> str | None:

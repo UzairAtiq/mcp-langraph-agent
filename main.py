@@ -26,7 +26,6 @@ from data.post_storage import (
     save_post_record,
 )
 from data.token_storage import (
-    delete_linkedin_token,
     get_linkedin_token_record,
     get_valid_linkedin_access_token,
     refresh_linkedin_access_token,
@@ -271,17 +270,7 @@ def linkedin_status(request: Request) -> dict[str, Any]:
             "message": "No LinkedIn token found. Please visit /linkedin/login to authenticate.",
         }
 
-    valid_token = get_valid_linkedin_access_token()
-    if not valid_token:
-        return {
-            "authenticated": False,
-            "redirect_uri": effective_uri,
-            "person_urn": record.get("person_urn"),
-            "expires_at": str(record.get("expires_at")),
-            "message": "LinkedIn token has expired or is invalid. Please reconnect.",
-        }
-
-    access_token = valid_token
+    access_token = record.get("access_token", "")
     masked_token = f"{access_token[:8]}...{access_token[-4:]}" if len(access_token) > 12 else "present"
 
     return {
@@ -293,17 +282,6 @@ def linkedin_status(request: Request) -> dict[str, Any]:
         "refresh_token_available": bool(record.get("refresh_token")),
         "scope": record.get("scope"),
         "updated_at": str(record.get("updated_at")),
-    }
-
-# disconnect linkedin integration and clear persistent token
-@app.post("/linkedin/disconnect")
-def disconnect_linkedin_endpoint(request: Request) -> dict[str, Any]:
-    delete_linkedin_token()
-    effective_uri = get_effective_redirect_uri(request)
-    return {
-        "authenticated": False,
-        "redirect_uri": effective_uri,
-        "message": "LinkedIn disconnected successfully.",
     }
 
 # manual or programmatic token refresh endpoint

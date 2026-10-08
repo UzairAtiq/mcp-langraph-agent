@@ -1,12 +1,10 @@
 import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchHealth, fetchLinkedInStatus, disconnectLinkedIn } from "@/api";
+import { useQuery } from "@tanstack/react-query";
+import { fetchHealth, fetchLinkedInStatus } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link2, LogOut, RefreshCw, Loader2 } from "lucide-react";
+import { Link2 } from "lucide-react";
 
 export const ConnectionCard: React.FC = () => {
-  const queryClient = useQueryClient();
-
   const { data: health, isLoading: isHealthLoading } = useQuery({
     queryKey: ["health"],
     queryFn: fetchHealth,
@@ -17,14 +15,6 @@ export const ConnectionCard: React.FC = () => {
     queryKey: ["linkedin-status"],
     queryFn: fetchLinkedInStatus,
     refetchInterval: 30000,
-  });
-
-  const disconnectMutation = useMutation({
-    mutationFn: disconnectLinkedIn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["linkedin-status"] });
-      queryClient.invalidateQueries({ queryKey: ["health"] });
-    },
   });
 
   const isLoading = isHealthLoading || isStatusLoading;
@@ -130,41 +120,15 @@ export const ConnectionCard: React.FC = () => {
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Button */}
       <div className="pt-2">
-        {isConnected ? (
-          <div className="flex items-center space-x-3">
-            <a
-              href="/linkedin/login"
-              className="inline-flex flex-1 items-center justify-center space-x-2 rounded-full bg-neutral-800 hover:bg-neutral-700 px-4 py-3 text-xs font-semibold text-neutral-200 transition-all active:scale-[0.98]"
-              title="Re-authenticate with LinkedIn"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Reconnect</span>
-            </a>
-            <button
-              type="button"
-              onClick={() => disconnectMutation.mutate()}
-              disabled={disconnectMutation.isPending}
-              className="inline-flex flex-1 items-center justify-center space-x-2 rounded-full bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 px-4 py-3 text-xs font-semibold text-red-300 transition-all active:scale-[0.98] disabled:opacity-50"
-            >
-              {disconnectMutation.isPending ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <LogOut className="w-3.5 h-3.5" />
-              )}
-              <span>{disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}</span>
-            </button>
-          </div>
-        ) : (
-          <a
-            href="/linkedin/login"
-            className="inline-flex w-full items-center justify-center space-x-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-neutral-950 shadow-sm transition-all hover:bg-accent-hover active:scale-[0.98]"
-          >
-            <Link2 className="w-4 h-4" />
-            <span>Connect LinkedIn</span>
-          </a>
-        )}
+        <a
+          href="/linkedin/login"
+          className="inline-flex w-full items-center justify-center space-x-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-neutral-950 shadow-sm transition-all hover:bg-accent-hover active:scale-[0.98]"
+        >
+          <Link2 className="w-4 h-4" />
+          <span>Connect LinkedIn</span>
+        </a>
       </div>
     </div>
   );
