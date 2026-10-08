@@ -15,9 +15,11 @@ __pycache__/
 *$py.class
 
 # Distribution / build
-build/
-dist/
+/build/
+/dist/
 *.egg-info/
+!frontend/dist/
+!frontend/dist/**
 
 # Testing / coverage
 .pytest_cache/
@@ -45,4 +47,3 @@ data/*.db
 # Node / frontend
 node_modules/
 frontend/node_modules/
-frontend/dist/
