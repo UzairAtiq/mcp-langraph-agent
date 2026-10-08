@@ -37,10 +37,10 @@ export const Posts: React.FC = () => {
     <div ref={containerRef} className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 leading-tight">
+        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
           All Posts
         </h1>
-        <p className="text-xs text-mutedText mt-1 font-normal">
+        <p className="text-xs text-mutedText dark:text-neutral-400 mt-1 font-normal">
           Chronological record of generated LinkedIn posts and approvals.
         </p>
       </div>
@@ -48,20 +48,20 @@ export const Posts: React.FC = () => {
       {/* Loading Skeletons */}
       {isLoading && (
         <div className="space-y-4">
-          <Skeleton className="h-32 w-full bg-white/80" />
-          <Skeleton className="h-32 w-full bg-white/80" />
-          <Skeleton className="h-32 w-full bg-white/80" />
+          <Skeleton className="h-32 w-full bg-white/80 dark:bg-neutral-800" />
+          <Skeleton className="h-32 w-full bg-white/80 dark:bg-neutral-800" />
+          <Skeleton className="h-32 w-full bg-white/80 dark:bg-neutral-800" />
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && posts.length === 0 && (
-        <div className="bg-white rounded-3xl p-12 text-center space-y-3 shadow-soft border border-neutral-100">
-          <div className="w-12 h-12 rounded-full bg-neutral-100 text-neutral-400 mx-auto flex items-center justify-center">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-3xl p-12 text-center space-y-3 shadow-soft border border-neutral-100 dark:border-neutral-800">
+          <div className="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-400 mx-auto flex items-center justify-center">
             <Inbox className="w-6 h-6" />
           </div>
-          <p className="text-base font-semibold text-neutral-800">No posts stored yet</p>
-          <p className="text-xs text-mutedText max-w-sm mx-auto">
+          <p className="text-base font-semibold text-neutral-800 dark:text-neutral-200">No posts stored yet</p>
+          <p className="text-xs text-mutedText dark:text-neutral-400 max-w-sm mx-auto">
             Head over to the Dashboard to generate your first AI post and start tracking.
           </p>
         </div>
