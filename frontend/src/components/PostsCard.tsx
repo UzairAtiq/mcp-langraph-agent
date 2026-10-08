@@ -17,11 +17,11 @@ export const PostsCard: React.FC = () => {
   const recentPosts = posts.slice(0, 5);
 
   return (
-    <div className="bg-white dark:bg-[#18181B] dark:border dark:border-neutral-800 rounded-3xl p-6 shadow-soft space-y-6 transition-colors">
+    <div className="bg-white dark:bg-darkcard dark:border dark:border-neutral-800/80 rounded-3xl p-6 shadow-soft space-y-6 transition-colors text-neutral-900 dark:text-white">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-bold text-lg tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
+          <h2 className="font-bold text-lg tracking-tight text-neutral-900 dark:text-white leading-tight">
             Recent Posts
           </h2>
           <p className="text-xs text-mutedText dark:text-neutral-400 font-normal mt-0.5">
@@ -31,7 +31,7 @@ export const PostsCard: React.FC = () => {
 
         <Link
           to="/posts"
-          className="inline-flex items-center space-x-1.5 rounded-full px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+          className="inline-flex items-center space-x-1.5 rounded-full px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-900 hover:bg-neutral-200 dark:hover:bg-neutral-800 border border-transparent dark:border-neutral-800 transition-colors"
         >
           <span>View all</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -41,15 +41,15 @@ export const PostsCard: React.FC = () => {
       {/* Loading state */}
       {isLoading && (
         <div className="space-y-4">
-          <Skeleton className="h-28 w-full bg-neutral-100 dark:bg-neutral-800" />
-          <Skeleton className="h-28 w-full bg-neutral-100 dark:bg-neutral-800" />
-          <Skeleton className="h-28 w-full bg-neutral-100 dark:bg-neutral-800" />
+          <Skeleton className="h-28 w-full bg-neutral-100 dark:bg-neutral-900" />
+          <Skeleton className="h-28 w-full bg-neutral-100 dark:bg-neutral-900" />
+          <Skeleton className="h-28 w-full bg-neutral-100 dark:bg-neutral-900" />
         </div>
       )}
 
       {/* Empty state */}
       {!isLoading && recentPosts.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 p-8 text-center space-y-2">
+        <div className="rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 p-8 text-center space-y-2 bg-neutral-50 dark:bg-neutral-900/60">
           <div className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-400 mx-auto flex items-center justify-center">
             <Inbox className="w-5 h-5" />
           </div>
