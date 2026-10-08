@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { generatePost, type GeneratePostResponse } from "@/api";
 import { Button } from "@/components/ui/button";
@@ -8,6 +10,7 @@ import { Sparkles, Loader2, CheckCircle2, AlertCircle, Copy, Check } from "lucid
 export const GenerateCard: React.FC = () => {
   const [topic, setTopic] = useState("");
   const [copied, setCopied] = useState(false);
+  const postResultRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
   const generateMutation = useMutation({
@@ -16,6 +19,31 @@ export const GenerateCard: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
   });
+
+  const generatedPost: GeneratePostResponse | undefined = generateMutation.data;
+
+  useGSAP(
+    () => {
+      if (generateMutation.isSuccess && generatedPost && postResultRef.current) {
+        gsap.fromTo(
+          postResultRef.current,
+          {
+            opacity: 0,
+            y: 10,
+            scale: 0.98,
+          },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.45,
+            ease: "power2.out",
+          }
+        );
+      }
+    },
+    { dependencies: [generateMutation.isSuccess, generatedPost?.post_id] }
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +56,6 @@ export const GenerateCard: React.FC = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-
-  const generatedPost: GeneratePostResponse | undefined = generateMutation.data;
 
   return (
     <div className="bg-white dark:bg-darkcard dark:border dark:border-neutral-800/80 rounded-3xl p-6 shadow-soft flex flex-col justify-between h-full overflow-hidden transition-colors text-neutral-900 dark:text-white">
@@ -87,7 +113,10 @@ export const GenerateCard: React.FC = () => {
       {/* Result / Output section with fixed remaining height */}
       <div className="flex-1 min-h-0 pt-3 flex flex-col">
         {generateMutation.isSuccess && generatedPost ? (
-          <div className="flex-1 min-h-0 flex flex-col rounded-2xl bg-neutral-50 dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800/80 p-3.5 space-y-2 overflow-hidden">
+          <div
+            ref={postResultRef}
+            className="flex-1 min-h-0 flex flex-col rounded-2xl bg-neutral-50 dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800/80 p-3.5 space-y-2 overflow-hidden"
+          >
             <div className="flex items-center justify-between text-xs shrink-0">
               <div className="flex items-center space-x-1.5 text-neutral-800 dark:text-neutral-200 font-semibold truncate">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
