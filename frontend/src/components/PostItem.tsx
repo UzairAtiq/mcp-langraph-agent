@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { type Post } from "@/api";
-import { Calendar, Hash } from "lucide-react";
+import { Calendar, Hash, ChevronDown, ChevronUp } from "lucide-react";
 
 interface PostItemProps {
   post: Post;
 }
 
 export const PostItem: React.FC<PostItemProps> = ({ post }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const postId = post.id || post.post_id || "post-item";
 
   const formattedDate = React.useMemo(() => {
@@ -25,6 +26,11 @@ export const PostItem: React.FC<PostItemProps> = ({ post }) => {
     }
   }, [post.created_at]);
 
+  const isLong = React.useMemo(() => {
+    const text = post.content || "";
+    return text.length > 160 || text.split("\n").length > 3;
+  }, [post.content]);
+
   return (
     <div className="bg-white dark:bg-neutral-900/80 rounded-3xl p-6 shadow-soft border border-neutral-100 dark:border-neutral-800/80 flex flex-col justify-between space-y-4 transition-all hover:shadow-md">
       <div className="flex items-center justify-between">
@@ -35,8 +41,29 @@ export const PostItem: React.FC<PostItemProps> = ({ post }) => {
         <StatusBadge status={post.status} />
       </div>
 
-      <div className="text-sm text-neutral-900 dark:text-neutral-100 font-normal leading-relaxed whitespace-pre-wrap break-words">
-        {post.content}
+      <div className="space-y-2">
+        <div
+          className={`text-sm text-neutral-900 dark:text-neutral-100 font-normal leading-relaxed whitespace-pre-wrap break-words ${
+            !isExpanded && isLong ? "line-clamp-3" : ""
+          }`}
+        >
+          {post.content}
+        </div>
+
+        {isLong && (
+          <button
+            type="button"
+            onClick={() => setIsExpanded((prev) => !prev)}
+            className="inline-flex items-center space-x-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white transition-colors pt-1"
+          >
+            <span>{isExpanded ? "Show less" : "Show full post"}</span>
+            {isExpanded ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
+        )}
       </div>
 
       <div className="flex items-center space-x-2 pt-2 border-t border-neutral-100 dark:border-neutral-800/80 text-[11px] text-mutedText dark:text-neutral-400">
