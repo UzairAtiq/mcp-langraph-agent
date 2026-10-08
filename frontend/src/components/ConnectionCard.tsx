@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchHealth, fetchLinkedInStatus } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link2 } from "lucide-react";
+import { Link2, Eye, EyeOff } from "lucide-react";
 
 export const ConnectionCard: React.FC = () => {
+  const [showPersonUrn, setShowPersonUrn] = useState(false);
+
   const { data: health, isLoading: isHealthLoading } = useQuery({
     queryKey: ["health"],
     queryFn: fetchHealth,
@@ -83,10 +85,30 @@ export const ConnectionCard: React.FC = () => {
           <span className="text-neutral-400">Person URN</span>
           {isLoading ? (
             <Skeleton className="h-4 w-36 bg-neutral-800" />
+          ) : status?.person_urn && status.person_urn !== "—" ? (
+            <div className="flex items-center space-x-1.5 max-w-[210px]">
+              <span
+                className="font-mono text-neutral-200 truncate"
+                title={showPersonUrn ? status.person_urn : "Click eye icon to reveal"}
+              >
+                {showPersonUrn ? status.person_urn : "••••••••••••••••"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowPersonUrn((prev) => !prev)}
+                className="text-neutral-400 hover:text-neutral-200 transition-colors p-0.5 rounded focus:outline-none"
+                title={showPersonUrn ? "Hide Person URN" : "Show Person URN"}
+                aria-label={showPersonUrn ? "Hide Person URN" : "Show Person URN"}
+              >
+                {showPersonUrn ? (
+                  <EyeOff className="w-3.5 h-3.5" />
+                ) : (
+                  <Eye className="w-3.5 h-3.5" />
+                )}
+              </button>
+            </div>
           ) : (
-            <span className="font-mono text-neutral-200 truncate max-w-[200px]" title={status?.person_urn || "—"}>
-              {status?.person_urn || "—"}
-            </span>
+            <span className="font-mono text-neutral-400">—</span>
           )}
         </div>
 
