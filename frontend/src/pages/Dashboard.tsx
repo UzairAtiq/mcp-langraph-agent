@@ -25,10 +25,10 @@ export const Dashboard: React.FC = () => {
     <div ref={containerRef} className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 leading-tight">
+        <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
           Post Dashboard
         </h1>
-        <p className="text-xs text-mutedText mt-1 font-normal">
+        <p className="text-xs text-mutedText dark:text-neutral-400 mt-1 font-normal">
           Generate, review and publish to LinkedIn.
         </p>
       </div>
