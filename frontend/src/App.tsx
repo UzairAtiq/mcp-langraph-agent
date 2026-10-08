@@ -18,13 +18,15 @@ export const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-screen bg-[#E5E5E5] p-3 md:p-4 flex items-stretch font-sans text-neutral-900">
-          <div className="w-full max-w-7xl mx-auto rounded-[32px] p-3 flex flex-col md:flex-row gap-4">
-            {/* Dark Sidebar */}
+        {/* Viewport canvas backdrop */}
+        <div className="min-h-screen bg-[#D4D4D8] p-2 md:p-5 flex items-center justify-center font-sans text-neutral-900">
+          {/* Main Dark App Container */}
+          <div className="w-full max-w-[1550px] h-[calc(100vh-2.5rem)] min-h-[750px] bg-sidebar rounded-[40px] p-3 md:p-4 flex flex-col md:flex-row shadow-2xl overflow-hidden">
+            {/* Sidebar taking full left space inside the dark container */}
             <Sidebar />
 
-            {/* Main Application Area */}
-            <main className="flex-1 min-w-0 py-2 px-1 md:px-4 overflow-y-auto">
+            {/* Light Content Page overlayed on top of the dark frame */}
+            <main className="flex-1 min-w-0 bg-[#E5E5E5] rounded-[32px] p-6 md:p-8 overflow-y-auto">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/posts" element={<Posts />} />
