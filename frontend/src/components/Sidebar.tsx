@@ -7,14 +7,14 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`bg-sidebar text-white rounded-3xl flex flex-col justify-between shrink-0 shadow-soft transition-all duration-300 ease-in-out ${
-        isCollapsed ? "w-20 p-4 items-center" : "w-64 p-6"
+      className={`text-white flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out ${
+        isCollapsed ? "w-20 px-3 py-6 items-center" : "w-64 px-5 py-6"
       }`}
     >
       <div className="w-full">
-        {/* Header with Logo and Collapse Toggle */}
+        {/* Header with Logo & Toggle */}
         <div
-          className={`flex items-center mb-10 ${
+          className={`flex items-center mb-8 ${
             isCollapsed ? "flex-col space-y-4 px-0 justify-center" : "justify-between px-2"
           }`}
         >
@@ -49,7 +49,7 @@ export const Sidebar: React.FC = () => {
           </button>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation Items */}
         <nav className="space-y-2 w-full">
           <NavLink
             to="/"
