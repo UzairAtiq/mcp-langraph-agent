@@ -45,7 +45,7 @@ export const ConnectionCard: React.FC = () => {
       : "/linkedin/callback");
 
   return (
-    <div className="bg-darkcard text-white rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-6">
+    <div className="bg-darkcard text-white rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-6 h-full">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -34,11 +34,11 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* 2-column Grid on Desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="dashboard-card h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <div className="dashboard-card h-full flex flex-col">
           <ConnectionCard />
         </div>
-        <div className="dashboard-card h-full">
+        <div className="dashboard-card h-full flex flex-col">
           <GenerateCard />
         </div>
         <div className="dashboard-card lg:col-span-2">

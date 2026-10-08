@@ -32,7 +32,7 @@ export const GenerateCard: React.FC = () => {
   const generatedPost: GeneratePostResponse | undefined = generateMutation.data;
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-5">
+    <div className="bg-white rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-5 h-full">
       <div>
         <div className="flex items-center space-x-2 mb-1">
           <div className="w-7 h-7 rounded-full bg-purpleAccent/10 text-purpleAccent flex items-center justify-center">
