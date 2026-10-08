@@ -3,81 +3,125 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Authorization Failed — LinkedIn Agent</title>
+  <title>Authorization Failed — Post Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <link rel="stylesheet" href="/static/style.css" />
   <style>
-    .center-wrap {
-      max-width: 500px;
-      margin: var(--s7) auto 0;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    .error-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: var(--err-bg);
-      border: 1px solid var(--err-border);
+    body {
+      background-color: #E5E5E5;
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto var(--s4);
-      color: var(--err);
+      padding: 24px;
+      color: #0A0A0A;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      background: #0A0A0A;
+      color: #FFFFFF;
+      border-radius: 32px;
+      padding: 36px 32px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    .error-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 18px;
+      color: #EF4444;
     }
     .page-title {
-      text-align: center;
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 700;
-      letter-spacing: -0.01em;
-      margin-bottom: var(--s2);
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
     }
     .error-msg {
-      text-align: center;
       font-size: 13px;
-      color: var(--text-secondary);
-      margin-bottom: var(--s5);
-      line-height: 1.6;
+      color: #D4D4D8;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 24px;
+      line-height: 1.5;
+      word-break: break-word;
     }
     .btn-row {
       display: flex;
+      gap: 12px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
       justify-content: center;
-      gap: var(--s2);
+      gap: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 12px 20px;
+      border-radius: 9999px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      flex: 1;
+      cursor: pointer;
+      border: none;
+    }
+    .btn--primary {
+      background: #FACC15;
+      color: #0A0A0A;
+    }
+    .btn--primary:hover {
+      background: #EAB308;
+    }
+    .btn--ghost {
+      background: rgba(255, 255, 255, 0.1);
+      color: #FFFFFF;
+    }
+    .btn--ghost:hover {
+      background: rgba(255, 255, 255, 0.18);
     }
   </style>
 </head>
 <body>
-  <div class="page-wrap">
-    <div class="center-wrap" id="err-card">
-      <div class="card">
-        <div class="error-icon">
-          <i data-lucide="x" style="width:22px;height:22px"></i>
-        </div>
-        <h1 class="page-title">Authorization Failed</h1>
-        <p class="error-msg">{{ERROR_MESSAGE}}</p>
+  <div class="card" id="err-card">
+    <div class="error-icon">
+      <i data-lucide="alert-triangle" style="width:24px;height:24px"></i>
+    </div>
+    <h1 class="page-title">Authorization Failed</h1>
+    <p class="error-msg">{{ERROR_MESSAGE}}</p>
 
-        <div class="btn-row">
-          <a href="/linkedin/login" class="btn btn--primary">
-            <i data-lucide="refresh-cw" style="width:14px;height:14px"></i>
-            Try Again
-          </a>
-          <a href="/" class="btn btn--ghost">
-            <i data-lucide="arrow-left" style="width:14px;height:14px"></i>
-            Dashboard
-          </a>
-        </div>
-      </div>
+    <div class="btn-row">
+      <a href="/linkedin/login" class="btn btn--primary">
+        <i data-lucide="refresh-cw" style="width:14px;height:14px"></i>
+        <span>Try Again</span>
+      </a>
+      <a href="/" class="btn btn--ghost">
+        <i data-lucide="arrow-left" style="width:14px;height:14px"></i>
+        <span>Dashboard</span>
+      </a>
     </div>
   </div>
 
   <script>
-    if (window.lucide && typeof lucide.createIcons === "function") lucide.createIcons();
-    if (typeof gsap !== "undefined") {
-      try {
-        gsap.from("#err-card", { opacity: 0, y: 12, duration: 0.4, ease: "power2.out" });
-      } catch (e) {}
+    if (window.lucide && typeof lucide.createIcons === "function") {
+      lucide.createIcons();
     }
   </script>
 </body>
