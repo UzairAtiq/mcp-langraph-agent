@@ -49,15 +49,18 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# mount frontend static files directory
+# mount frontend static and built react assets
 FRONTEND_DIR = BASE_DIR / "frontend"
+DIST_DIR = FRONTEND_DIR / "dist"
+ASSETS_DIR = DIST_DIR / "assets"
+
+if ASSETS_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
 if FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
-# root dashboard endpoint
-@app.get("/", response_class=HTMLResponse)
-async def root_dashboard() -> HTMLResponse:
-    index_file = FRONTEND_DIR / "index.html"
+def get_index_html_response() -> HTMLResponse:
+    index_file = DIST_DIR / "index.html" if DIST_DIR.exists() else FRONTEND_DIR / "index.html"
     if index_file.exists():
         return HTMLResponse(
             content=index_file.read_text(encoding="utf-8"),
@@ -68,6 +71,11 @@ async def root_dashboard() -> HTMLResponse:
             },
         )
     return HTMLResponse(content="<h2>LinkedIn Agent API Running</h2><a href='/docs'>Swagger Docs</a>")
+
+# root dashboard endpoint
+@app.get("/", response_class=HTMLResponse)
+async def root_dashboard() -> HTMLResponse:
+    return get_index_html_response()
 
 # health check endpoint for cloud hosts
 @app.get("/health")
@@ -326,9 +334,14 @@ async def handle_slack_interactions(payload: Annotated[str, Form()]) -> Response
 
     return Response(status_code=status.HTTP_200_OK)
 
-# list all saved posts
+# list all saved posts (or return React app if visited directly by browser)
 @app.get("/posts")
-def get_all_posts(status_filter: str | None = None) -> dict[str, Any]:
+def get_all_posts(request: Request, status_filter: str | None = None) -> Any:
+    # If a browser requests the page directly (e.g. reload on /posts), return the React app
+    accept_header = request.headers.get("accept", "")
+    if "text/html" in accept_header and not request.headers.get("x-requested-with"):
+        return get_index_html_response()
+
     records = list_posts()
     if status_filter:
         records = [
@@ -345,6 +358,13 @@ def get_all_posts(status_filter: str | None = None) -> dict[str, Any]:
         sanitized_records.append(safe_copy)
 
     return {"total_count": len(sanitized_records), "posts": sanitized_records}
+
+# client-side routing fallback for React SPA
+@app.get("/{full_path:path}", response_class=HTMLResponse)
+async def spa_fallback(full_path: str, request: Request) -> Any:
+    if full_path.startswith(("health", "linkedin", "slack", "posts", "docs", "redoc", "openapi.json", "assets", "static")):
+        raise HTTPException(status_code=404, detail="Not found")
+    return get_index_html_response()
 
 # retrieve single post by id
 @app.get("/posts/{post_id}")
