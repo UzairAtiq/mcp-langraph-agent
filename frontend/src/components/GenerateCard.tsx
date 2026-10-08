@@ -32,24 +32,24 @@ export const GenerateCard: React.FC = () => {
   const generatedPost: GeneratePostResponse | undefined = generateMutation.data;
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-5 h-full">
+    <div className="bg-white dark:bg-[#18181B] dark:border dark:border-neutral-800 rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-5 h-full transition-colors">
       <div>
         <div className="flex items-center space-x-2 mb-1">
           <div className="w-7 h-7 rounded-full bg-purpleAccent/10 text-purpleAccent flex items-center justify-center">
             <Sparkles className="w-4 h-4" />
           </div>
-          <h2 className="font-bold text-lg tracking-tight text-neutral-900 leading-tight">
+          <h2 className="font-bold text-lg tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
             Send to AI
           </h2>
         </div>
-        <p className="text-xs text-mutedText font-normal">
+        <p className="text-xs text-mutedText dark:text-neutral-400 font-normal">
           Generate an engaging LinkedIn post and send it directly to Slack for approval.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="topic-input" className="block text-xs font-semibold text-neutral-700 mb-2">
+          <label htmlFor="topic-input" className="block text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
             Post Topic
           </label>
           <Input
@@ -83,21 +83,21 @@ export const GenerateCard: React.FC = () => {
 
       {/* Success notification & Full Content */}
       {generateMutation.isSuccess && generatedPost && (
-        <div className="rounded-2xl bg-neutral-50 border border-neutral-200 p-4 space-y-3">
+        <div className="rounded-2xl bg-neutral-50 dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-800 p-4 space-y-3">
           <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center space-x-1.5 text-neutral-800 font-semibold">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <div className="flex items-center space-x-1.5 text-neutral-800 dark:text-neutral-200 font-semibold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
               <span>Post #{generatedPost.post_id} created & sent to Slack</span>
             </div>
             <button
               type="button"
               onClick={() => handleCopy(generatedPost.generated_content)}
-              className="inline-flex items-center space-x-1 text-[11px] text-neutral-500 hover:text-neutral-900 transition-colors"
+              className="inline-flex items-center space-x-1 text-[11px] text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
             >
               {copied ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-emerald-600 font-medium">Copied</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-emerald-500 font-medium">Copied</span>
                 </>
               ) : (
                 <>
@@ -107,7 +107,7 @@ export const GenerateCard: React.FC = () => {
               )}
             </button>
           </div>
-          <div className="text-xs text-neutral-800 whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto pr-1">
+          <div className="text-xs text-neutral-800 dark:text-neutral-200 whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto pr-1">
             {generatedPost.generated_content}
           </div>
         </div>
