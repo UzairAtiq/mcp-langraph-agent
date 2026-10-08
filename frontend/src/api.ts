@@ -77,6 +77,16 @@ export async function fetchPosts(): Promise<PostsResponse> {
   return response.json();
 }
 
+export async function deletePost(postId: string): Promise<{ success: boolean; post_id: string; message: string }> {
+  const response = await fetch(`/posts/${encodeURIComponent(postId)}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to delete post: ${response.statusText}`);
+  }
+  return response.json();
+}
+
 export async function generatePost(topic: string): Promise<GeneratePostResponse> {
   const url = `/posts/generate?topic=${encodeURIComponent(topic)}`;
   const response = await fetch(url, {

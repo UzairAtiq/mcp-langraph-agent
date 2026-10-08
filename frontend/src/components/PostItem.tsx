@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { StatusBadge } from "@/components/StatusBadge";
-import { type Post } from "@/api";
-import { Calendar, Hash, ChevronDown, ChevronUp } from "lucide-react";
+import { deletePost, type Post } from "@/api";
+import { Calendar, Hash, ChevronDown, ChevronUp, Trash2, Loader2 } from "lucide-react";
 
 interface PostItemProps {
   post: Post;
@@ -9,7 +10,23 @@ interface PostItemProps {
 
 export const PostItem: React.FC<PostItemProps> = ({ post }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const queryClient = useQueryClient();
   const postId = post.id || post.post_id || "post-item";
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deletePost(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+
+  React.useEffect(() => {
+    if (confirmDelete) {
+      const timer = setTimeout(() => setConfirmDelete(false), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [confirmDelete]);
 
   const formattedDate = React.useMemo(() => {
     if (!post.created_at) return "—";
@@ -38,7 +55,43 @@ export const PostItem: React.FC<PostItemProps> = ({ post }) => {
           <Hash className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-500" />
           <span>{postId}</span>
         </div>
-        <StatusBadge status={post.status} />
+        <div className="flex items-center space-x-2">
+          <StatusBadge status={post.status} />
+          {confirmDelete ? (
+            <div className="flex items-center space-x-1 bg-red-950/20 border border-red-500/30 rounded-full px-2 py-0.5">
+              <button
+                type="button"
+                onClick={() => deleteMutation.mutate()}
+                disabled={deleteMutation.isPending}
+                className="inline-flex items-center space-x-1 text-[11px] font-semibold text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <span>Delete?</span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleteMutation.isPending}
+                className="text-[11px] text-neutral-400 hover:text-neutral-200 transition-colors pl-1"
+                title="Cancel"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="p-1 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              title="Delete post"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">

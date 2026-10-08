@@ -377,3 +377,40 @@ def list_posts() -> list[dict[str, Any]]:
     # fallback to json
     json_posts = _load_posts_from_json()
     return list(json_posts.values())
+
+# delete a post record by post id
+def delete_post_record(post_id: str) -> bool:
+    init_posts_db()
+    deleted = False
+
+    # delete from postgres
+    conn = get_postgres_connection()
+    if conn:
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute("DELETE FROM posts WHERE post_id = %s;", (post_id,))
+                    if cur.rowcount > 0:
+                        deleted = True
+        except Exception as err:
+            logger.warning(f"failed to delete post from postgres: {err}")
+
+    # delete from sqlite
+    try:
+        with get_sqlite_connection() as sqlite_conn:
+            cur = sqlite_conn.cursor()
+            cur.execute("DELETE FROM posts WHERE post_id = ?;", (post_id,))
+            if cur.rowcount > 0:
+                deleted = True
+            sqlite_conn.commit()
+    except Exception as err:
+        logger.warning(f"failed to delete post from sqlite: {err}")
+
+    # delete from json fallback
+    json_posts = _load_posts_from_json()
+    if post_id in json_posts:
+        del json_posts[post_id]
+        _save_posts_to_json(json_posts)
+        deleted = True
+
+    return deleted
