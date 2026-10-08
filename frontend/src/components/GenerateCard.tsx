@@ -32,13 +32,13 @@ export const GenerateCard: React.FC = () => {
   const generatedPost: GeneratePostResponse | undefined = generateMutation.data;
 
   return (
-    <div className="bg-white dark:bg-[#18181B] dark:border dark:border-neutral-800 rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-5 h-full transition-colors">
+    <div className="bg-white dark:bg-darkcard dark:border dark:border-neutral-800/80 rounded-3xl p-6 shadow-soft flex flex-col justify-between space-y-5 h-full transition-colors text-neutral-900 dark:text-white">
       <div>
         <div className="flex items-center space-x-2 mb-1">
           <div className="w-7 h-7 rounded-full bg-purpleAccent/10 text-purpleAccent flex items-center justify-center">
             <Sparkles className="w-4 h-4" />
           </div>
-          <h2 className="font-bold text-lg tracking-tight text-neutral-900 dark:text-neutral-100 leading-tight">
+          <h2 className="font-bold text-lg tracking-tight text-neutral-900 dark:text-white leading-tight">
             Send to AI
           </h2>
         </div>
@@ -59,6 +59,7 @@ export const GenerateCard: React.FC = () => {
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             disabled={generateMutation.isPending}
+            className="dark:bg-neutral-900 dark:border-neutral-800"
           />
         </div>
 
@@ -83,7 +84,7 @@ export const GenerateCard: React.FC = () => {
 
       {/* Success notification & Full Content */}
       {generateMutation.isSuccess && generatedPost && (
-        <div className="rounded-2xl bg-neutral-50 dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-800 p-4 space-y-3">
+        <div className="rounded-2xl bg-neutral-50 dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800/80 p-4 space-y-3">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center space-x-1.5 text-neutral-800 dark:text-neutral-200 font-semibold">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
