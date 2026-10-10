@@ -2,110 +2,79 @@
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/UzairAtiq/mcp-langraph-agent)
 
-An automated, human-in-the-loop pipeline that generates technical and engaging LinkedIn posts using Groq LLMs, delivers interactive approval cards to Slack with yes/no buttons, and publishes approved posts to LinkedIn.
+An automated, human-in-the-loop pipeline that generates technical LinkedIn posts using Groq LLMs, delivers interactive approval cards to Slack, and publishes approved posts to LinkedIn.
 
-The system is built with **LangGraph**, **Model Context Protocol (MCP)** tool servers, **FastAPI**, persistent PostgreSQL / SQLite token storage with automated token refreshes, and a **React 18 + Vite** dashboard.
+**Tech Stack:** LangGraph · MCP · FastAPI · React · Groq
 
----
+<p align="center"><img src="assets/demo.gif" width="700" alt="Demo"></p>
 
-## Architecture Overview
+## Features
 
-```
-User Prompt / Web Dashboard -> LangGraph Agent -> Groq LLM (Generates Post)
-                                     |
-                                     v
-                 Persistent Database (PostgreSQL / SQLite) [status: pending]
-                                     |
-                                     v
-                 Slack Webhook (Block Kit with Approve/Discard Buttons)
-                                     |
-                                     v
-                 User clicks "Approve" in Slack
-                                     |
-                                     v
-                 Slack POST -> FastAPI (/slack/interactions)
-                                     |
-                                     v
-                 Database updated [status: approved] -> Auto-Refreshes Token if needed
-                                     |
-                                     v
-                 Publishes to LinkedIn API -> Replaces Slack card with confirmation
+* **AI Post Generation** — Drafts technical, engaging LinkedIn posts with Groq LLMs and LangGraph workflows.
+* **Human-in-the-Loop Slack Approvals** — Interactive Slack Block Kit cards with 1-click Approve and Discard actions.
+* **Automated Publishing** — Publishes approved posts to LinkedIn API with automated OAuth 2.0 token refreshes.
+* **Web Dashboard** — React 18 + Vite interface to generate posts, review queue status, and manage connections.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A["Prompt / Dashboard"] --> B["LangGraph Agent"]
+    B --> C["Groq LLM"]
+    C --> D[("Database (pending)")]
+    D --> E["Slack Approval Card"]
+    E -->|"Approve"| F["FastAPI /slack/interactions"]
+    E -->|"Discard"| G["Discarded"]
+    F --> H["LinkedIn Post"]
 ```
 
----
-
-## Documentation
-
-Comprehensive guides are organized in the [`docs/`](file:///Users/uzair/Developer/mcp-langraph-agent/docs) directory:
-
-* **[Project Structure & Architecture](file:///Users/uzair/Developer/mcp-langraph-agent/docs/PROJECT_STRUCTURE.md)**: Full codebase directory breakdown, data flow, and file map.
-* **[LinkedIn App & OAuth Setup](file:///Users/uzair/Developer/mcp-langraph-agent/docs/linkedin_setup.md)**: Developer app creation, permissions, 1-click connect, and 60-day token lifecycle.
-* **[Slack App & Interactivity Setup](file:///Users/uzair/Developer/mcp-langraph-agent/docs/slack_setup.md)**: Webhooks, Block Kit approval cards, ngrok setup, and interaction callbacks.
-* **[Render Cloud Deployment](file:///Users/uzair/Developer/mcp-langraph-agent/docs/deployment.md)**: 1-click Blueprint deployment, managed PostgreSQL, and environment variables.
-
----
-
-## Quickstart (Local Development)
-
-### 1. Prerequisites
-* Python 3.11 or 3.12
-* Node.js 18+ (for frontend dashboard)
-* LinkedIn Developer App credentials
-* Slack Workspace with Incoming Webhook and Interactivity enabled
-* Groq API key
-
-### 2. Setup Environment
+## Quickstart
 
 ```bash
-# Clone repository
+# 1. Clone repository & install dependencies
 git clone https://github.com/UzairAtiq/mcp-langraph-agent.git
 cd mcp-langraph-agent
-
-# Create Python virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r project/backend/requirements.txt
 
-# Configure environment variables
+# 2. Configure environment variables
 cp .env.example .env
 ```
 
-Fill in required keys in `.env`:
-* `GROQ_API_KEY`: Groq API key
-* `SLACK_WEBHOOK_URL`: Slack Incoming Webhook URL
-* `LINKEDIN_CLIENT_ID`: LinkedIn Developer Client ID
-* `LINKEDIN_CLIENT_SECRET`: LinkedIn Developer Client Secret
-
-### 3. Build Frontend & Run Backend
+Fill in the 4 required keys in `.env`:
+* `GROQ_API_KEY`
+* `SLACK_WEBHOOK_URL`
+* `LINKEDIN_CLIENT_ID`
+* `LINKEDIN_CLIENT_SECRET`
 
 ```bash
-# Build React dashboard bundle
-cd project/frontend
-npm install
-npm run build
-cd ../backend
-
-# Run FastAPI server
-uvicorn main:app --reload --port 8000
+# 3. Build frontend & run backend
+cd project/frontend && npm install && npm run build
+cd ../backend && uvicorn main:app --reload --port 8000
 ```
 
-Open `http://localhost:8000` to view the dashboard and connect your LinkedIn account.
+Open [http://localhost:8000](http://localhost:8000) to view the dashboard and connect your LinkedIn account.
 
-### 4. Run LangGraph Agent
+## Documentation
 
-```bash
-python -m agent.graph
-```
-
----
+* [Development & Testing](docs/development.md) — Running the LangGraph agent CLI, unit tests, and evaluations.
+* [LinkedIn App & OAuth Setup](docs/linkedin_setup.md) — Developer app creation, permissions, and 60-day token lifecycle.
+* [Slack App & Interactivity Setup](docs/slack_setup.md) — Webhooks, Block Kit approval cards, and interaction callbacks.
+* [Render Cloud Deployment](docs/deployment.md) — 1-click Blueprint deployment and PostgreSQL setup.
+* [Project Structure & Architecture](docs/PROJECT_STRUCTURE.md) — Full codebase directory breakdown and file map.
 
 ## Repository Structure
+
+<details>
+<summary>Repository structure</summary>
 
 ```
 mcp-langraph-agent/
 ├── README.md               # Main project documentation and quickstart
 ├── render.yaml             # Render Blueprint infrastructure configuration
 ├── .gitignore              # Git ignore rules
+├── assets/                 # Media and demo assets
 ├── project/
 │   ├── backend/            # FastAPI, LangGraph agent, MCP servers, data, and tests
 │   │   ├── agent/          # State graph, workflow nodes, and tool adapters
@@ -119,20 +88,8 @@ mcp-langraph-agent/
 │   │   ├── main.py         # Unified FastAPI application
 │   │   └── requirements.txt# Backend dependencies
 │   └── frontend/           # React 18 + Vite + Tailwind dashboard
-├── evals/                  # Benchmark evaluations and LLM-as-a-judge tests
 ├── docs/                   # Setup guides and architecture documentation
 └── _notes/                 # Plans, prompts, and knowledge graph analysis
 ```
 
----
-
-## Running Tests & Evaluations
-
-```bash
-# Run unit tests across agent and MCP servers
-pytest project/backend/tests/test_agent.py
-pytest project/backend/tests/test_mcp_servers.py
-
-# Run benchmark evaluation suite
-python evals/run_evals.py
-```
+</details>
