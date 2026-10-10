@@ -64,6 +64,8 @@ def get_linkedin_access_token() -> str | None:
 
     # fallback to local .linkedin_token file
     token_file_path = BASE_DIR / ".linkedin_token"
+    if not token_file_path.exists() and (REPO_ROOT / ".linkedin_token").exists():
+        token_file_path = REPO_ROOT / ".linkedin_token"
     if token_file_path.exists():
         token_content = token_file_path.read_text(encoding="utf-8").strip()
         if token_content:

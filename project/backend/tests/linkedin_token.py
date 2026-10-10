@@ -140,8 +140,12 @@ def exchange_code_for_token(code: str) -> bool:
     print(f"✅ Automatically updated {ENV_FILE_PATH} with access token and profile info.")
 
     # also save backup .linkedin_token file
-    token_backup_file = PROJECT_ROOT / ".linkedin_token"
+    token_backup_file = REPO_ROOT / ".linkedin_token"
     token_backup_file.write_text(access_token, encoding="utf-8")
+    try:
+        (BACKEND_DIR / ".linkedin_token").write_text(access_token, encoding="utf-8")
+    except OSError:
+        pass
     print(f"✅ Token backup written to {token_backup_file}.")
 
     return True
