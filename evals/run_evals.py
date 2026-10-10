@@ -1,6 +1,12 @@
 import asyncio
 import json
+import sys
 from pathlib import Path
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent / "project" / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
 from agent.graph import build_agent
 from evals.dataset import TEST_CASES
 from evals.judge import judge_response

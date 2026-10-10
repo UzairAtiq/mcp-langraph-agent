@@ -6,10 +6,11 @@ import requests
 from dotenv import load_dotenv
 
 # resolve project root directory and env path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-ENV_FILE_PATH = PROJECT_ROOT / ".env"
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = BACKEND_DIR.parent.parent
+ENV_FILE_PATH = BACKEND_DIR / ".env" if (BACKEND_DIR / ".env").exists() else REPO_ROOT / ".env"
 
-# load environment variables from project root .env
+# load environment variables from .env
 load_dotenv(dotenv_path=ENV_FILE_PATH)
 
 # read oauth credentials from environment

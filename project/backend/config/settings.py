@@ -3,11 +3,15 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# load environment variables from .env file in project root
-load_dotenv()
-
 # base project directory
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_ROOT = BASE_DIR.parent.parent
+
+# load environment variables from .env file in backend directory or project root
+for env_candidate in [BASE_DIR / ".env", REPO_ROOT / ".env"]:
+    if env_candidate.exists():
+        load_dotenv(dotenv_path=env_candidate)
+load_dotenv()
 
 # port configuration for cloud host (Render, Railway, Heroku)
 PORT = int(os.getenv("PORT", "8000"))

@@ -1,8 +1,20 @@
+import os
 import sys
 from contextlib import AsyncExitStack
+from pathlib import Path
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+
+def _get_mcp_env() -> dict[str, str]:
+    env = dict(os.environ)
+    backend_path = str(BACKEND_DIR)
+    current_pythonpath = env.get("PYTHONPATH", "")
+    if backend_path not in current_pythonpath.split(os.pathsep):
+        env["PYTHONPATH"] = f"{backend_path}{os.pathsep}{current_pythonpath}" if current_pythonpath else backend_path
+    return env
 
 # standalone utility for testing single mcp servers in isolation
 class MCPClient:
@@ -16,6 +28,8 @@ class MCPClient:
         params = StdioServerParameters(
             command=sys.executable,
             args=["-m", self.server_module],
+            cwd=str(BACKEND_DIR),
+            env=_get_mcp_env(),
         )
 
         # establish stdio read and write channels
@@ -43,6 +57,7 @@ class MCPClient:
 
 # fetch all tools across registered mcp servers for langgraph agent
 async def get_langgraph_tools() -> list:
+    server_env = _get_mcp_env()
     # configure all mcp servers with stdio transport
     client = MultiServerMCPClient(
         {
@@ -50,16 +65,22 @@ async def get_langgraph_tools() -> list:
                 "command": sys.executable,
                 "args": ["-m", "mcp_servers.db_server"],
                 "transport": "stdio",
+                "cwd": str(BACKEND_DIR),
+                "env": server_env,
             },
             "slack": {
                 "command": sys.executable,
                 "args": ["-m", "mcp_servers.slack_server"],
                 "transport": "stdio",
+                "cwd": str(BACKEND_DIR),
+                "env": server_env,
             },
             "linkedin_post_generator": {
                 "command": sys.executable,
                 "args": ["-m", "mcp_servers.linkedin_post_generator"],
                 "transport": "stdio",
+                "cwd": str(BACKEND_DIR),
+                "env": server_env,
             },
         }
     )

@@ -212,6 +212,8 @@ def get_linkedin_token_record(token_id: str = "default") -> dict[str, Any] | Non
 
     # check local file fallback
     token_file = BASE_DIR / ".linkedin_token"
+    if not token_file.exists() and (BASE_DIR.parent.parent / ".linkedin_token").exists():
+        token_file = BASE_DIR.parent.parent / ".linkedin_token"
     if token_file.exists():
         file_token = token_file.read_text(encoding="utf-8").strip()
         if file_token:

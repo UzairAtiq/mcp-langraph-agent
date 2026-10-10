@@ -1,4 +1,11 @@
 import json
+import sys
+from pathlib import Path
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent / "project" / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
 from langchain_groq import ChatGroq
 from config.settings import GROQ_API_KEY
 

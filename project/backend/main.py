@@ -51,7 +51,7 @@ app = FastAPI(
 )
 
 # mount frontend static and built react assets
-FRONTEND_DIR = BASE_DIR / "frontend"
+FRONTEND_DIR = (BASE_DIR.parent / "frontend").resolve() if (BASE_DIR.parent / "frontend").exists() else (BASE_DIR / "frontend").resolve()
 DIST_DIR = FRONTEND_DIR / "dist"
 ASSETS_DIR = DIST_DIR / "assets"
 
