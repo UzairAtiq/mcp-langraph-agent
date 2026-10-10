@@ -6,7 +6,7 @@ An automated, human-in-the-loop pipeline that generates technical LinkedIn posts
 
 **Tech Stack:** LangGraph · MCP · FastAPI · React · Groq
 
-<p align="center"><img src="assets/demo.gif" width="700" alt="Demo"></p>
+<p align="center"><img src="assets/output.gif" width="700" alt="Demo"></p>
 
 ## Features
 
