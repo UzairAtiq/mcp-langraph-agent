@@ -38,6 +38,8 @@ htmlcov/
 data/*.json
 *.db
 data/*.db
+project/backend/data/*.json
+project/backend/data/*.db
 
 # linkedin ignore
 .linkedin_token
@@ -46,3 +48,13 @@ data/*.db
 node_modules/
 frontend/node_modules/
 frontend/dist/
+project/frontend/node_modules/
+project/frontend/dist/
+
+# Logs and history
+logs/
+history/
+
+# Graphify
+graphify-out/
+_notes/graphify-out/
