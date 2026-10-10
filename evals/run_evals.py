@@ -3,9 +3,11 @@ import json
 import sys
 from pathlib import Path
 
-BACKEND_DIR = Path(__file__).resolve().parent.parent / "project" / "backend"
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
+REPO_ROOT = Path(__file__).resolve().parent.parent
+BACKEND_DIR = REPO_ROOT / "project" / "backend"
+for path_dir in [str(REPO_ROOT), str(BACKEND_DIR)]:
+    if path_dir not in sys.path:
+        sys.path.insert(0, path_dir)
 
 from agent.graph import build_agent
 from evals.dataset import TEST_CASES
