@@ -8,13 +8,14 @@ for path_dir in [str(REPO_ROOT), str(BACKEND_DIR)]:
     if path_dir not in sys.path:
         sys.path.insert(0, path_dir)
 
+from pydantic import SecretStr
 from langchain_groq import ChatGroq
 from config.settings import GROQ_API_KEY
 
 # initialize standalone llm instance for evaluation
 judge_llm = ChatGroq(
     model="openai/gpt-oss-120b",
-    api_key=GROQ_API_KEY,
+    api_key=SecretStr(GROQ_API_KEY) if GROQ_API_KEY else None,
 )
 
 # evaluate single agent execution result against expected behavior
@@ -38,7 +39,8 @@ respond only in this json format, nothing else:
 
     # parse json structure from response text
     try:
-        clean_text = response.content.replace("```json", "").replace("```", "").strip()
+        raw_content = response.content if isinstance(response.content, str) else str(response.content)
+        clean_text = raw_content.replace("```json", "").replace("```", "").strip()
         verdict = json.loads(clean_text)
     except (json.JSONDecodeError, AttributeError):
         verdict = {"score": "error", "reasoning": "could not parse judge response"}
