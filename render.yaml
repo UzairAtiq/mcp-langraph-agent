@@ -3,7 +3,8 @@ services:
     name: linkedin-slack-agent
     env: python
     plan: free
-    buildCommand: npm --prefix frontend install && npm --prefix frontend run build && pip install -r requirements.txt
+    rootDir: project/backend
+    buildCommand: npm --prefix ../frontend install && npm --prefix ../frontend run build && pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     autoDeploy: true
